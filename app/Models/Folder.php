@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -24,6 +25,11 @@ class Folder extends Model
     public function linkable(): MorphMany
     {
         return $this->MorphMany(Link::class, 'linkable');
+    }
+
+    public function vault(): BelongsTo
+    {
+        return $this->belongsTo(Vault::class);
     }
 
     public function getActivitylogOptions(): LogOptions

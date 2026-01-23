@@ -67,7 +67,6 @@ class CreateVaultJob implements ShouldQueue
             'name' => Arr::get($this->vaultData, 0),
             'aws_bucket_name' => $bucketName,
             'aws_bucket_arn' => Arr::get($bucket, 'BucketArn'),
-            'region' => Arr::get($this->vaultData, 1),
             'location' => Arr::get($this->vaultData, 1),
         ]);
 
@@ -76,12 +75,12 @@ class CreateVaultJob implements ShouldQueue
     public function generateBucketName($vaultName): string
     {
         // the uuid should be the uuid from the Auth user
-        $user = Auth::user();
+        $user = Auth::user()->id;
 
         $uuid = Str::uuid()->toString();
 
         // take the user uuid as a prefix, currently substituted through a Str::uuid
-        return "{$uuid}";
+        return "{$user}-{$uuid}";
     }
 
     public function failed(Exception $exception)

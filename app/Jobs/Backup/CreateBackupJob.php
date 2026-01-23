@@ -12,7 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CreateBackupJob implements ShouldQueue
@@ -20,35 +20,40 @@ class CreateBackupJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     // get the file content from the request
-    public function __construct(protected ?array $path, protected $file, protected ?Vault $vault) {}
+    public function __construct(protected string $storedPath, protected Vault $vault, protected array $meta) {}
 
     public function handle(): void
     {
         $s3Client = new S3Client([
             'version' => 'latest',
-            'region' => 'us-west-2',
+            'region' => $this->vault->region,
         ]);
 
         $transferManager = new S3TransferManager($s3Client);
+        $absolutePath = Storage::path($this->storedPath);
+        $key = Str::uuid()->toString();
 
         // also put tags onto the object
         $uploadPromise = $transferManager->upload(
-            new UploadRequest('path the local file', [
-                'Bucket' => $this->vault ?? Arr::get($this->vault, 'bucket'),
-                'Key' => Arr::get($this->path, 'key'),
+            new UploadRequest($absolutePath, [
+                'Bucket' => $this->vault->aws_bucket_name,
+                'Key' => $key, // the key is also with the folders not only the filename
             ])
         );
 
-        $result = $uploadPromise->wait();
+        // define the storage class, if user did select one, if not take the one from the folder
 
         Backup::create([
-            'vault_id' => $this->vault->id,
-            'user_id' => 1, // later change this dynamically
-            'name' => $this->file->name,
+            'backupable_id' => $this->vault->id,
+            'backupable_type' => get_class($this->vault),
+            // 'user_id' => 1, // later change this dynamically
+            'name' => $this->meta['original_name'] ?? 'backup',
             'path' => $this->generateBackupName(),
-            'size' => $this->file->size,
-            'mime_type' => $this->file->mime_type,
+            'size' => $this->meta['size'] ?? null,
+            'mime_type' => $this->meta['mime_type'] ?? null,
         ]);
+
+        Storage::delete($this->storedPath);
     }
 
     public function generateBackupName(): string

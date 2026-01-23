@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Vault;
+namespace App\Http\Requests\Backup;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class VaultStoreRequest extends FormRequest
+class BackupRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,12 +22,10 @@ class VaultStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
-            'wormProtection' => 'boolean',
-            'region' => 'required|string|max:255',
-            'encryption' => 'boolean',
-            'deleteProtection' => 'boolean',
+            'files' => 'required|file|',
+            'vault' => 'required',
+            'folder' => 'integer',
+            'storage_class' => 'integer',
         ];
     }
 }

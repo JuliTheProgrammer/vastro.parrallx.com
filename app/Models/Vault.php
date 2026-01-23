@@ -50,6 +50,11 @@ class Vault extends Model
         return $this->morphMany(Folder::class, 'folderable');
     }
 
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(Folder::class);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

@@ -17,7 +17,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { Head, usePage } from '@inertiajs/react';
+import { toUrl } from '@/lib/utils';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { FileText, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -37,18 +38,34 @@ export default function UploadBackup() {
     const dataVaults = props.vaults ?? [];
     const allFolders = props.folders ?? [];
     const [step, setStep] = useState<Step>(1);
-    const [files, setFiles] = useState<File[]>([]);
     const [storageClass, setStorageClass] = useState('');
     const [dataVault, setDataVault] = useState('');
     const [folder, setFolder] = useState('');
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        reset,
+    } = useForm<{
+        files: File[];
+        vault_id: string;
+        folder_id: string | null;
+        storage_class: string | null;
+    }>({
+        files: [],
+        vault_id: '',
+        folder_id: null,
+        storage_class: null,
+    });
 
-    const hasFiles = useMemo(() => files.length > 0, [files]);
+    const hasFiles = useMemo(() => data.files.length > 0, [data.files]);
     const canContinue =
-        step === 1 ? hasFiles : storageClass && dataVault && folder;
+        step === 1 ? hasFiles : Boolean(dataVault);
     const totalBytes = useMemo(
-        () => files.reduce((sum, file) => sum + file.size, 0),
-        [files],
+        () => data.files.reduce((sum, file) => sum + file.size, 0),
+        [data.files],
     );
     const totalGB = totalBytes / (1024 * 1024 * 1024);
     const formattedTotalGB = totalGB.toFixed(2);
@@ -60,13 +77,13 @@ export default function UploadBackup() {
         }).format(value);
 
     const previews = useMemo(() => {
-        return files.map((file) => {
+        return data.files.map((file) => {
             if (file.type.startsWith('image/')) {
                 return URL.createObjectURL(file);
             }
             return null;
         });
-    }, [files]);
+    }, [data.files]);
 
     useEffect(() => {
         return () => {
@@ -77,6 +94,24 @@ export default function UploadBackup() {
             });
         };
     }, [previews]);
+
+    const handleSubmit = () => {
+        setData('vault_id', dataVault);
+        setData('folder_id', folder || null);
+        setData('storage_class', storageClass || null);
+
+        post(toUrl('/backups'), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                reset();
+                setStorageClass('');
+                setDataVault('');
+                setFolder('');
+                setStep(1);
+            },
+        });
+    };
 
     return (
         <AppLayout
@@ -143,7 +178,7 @@ export default function UploadBackup() {
                                 </Button>
                                 {hasFiles ? (
                                     <span className="text-xs text-muted-foreground">
-                                        {files.length} selected
+                                        {data.files.length} selected
                                     </span>
                                 ) : null}
                                 <Input
@@ -155,8 +190,8 @@ export default function UploadBackup() {
                                         const nextFiles = Array.from(
                                             event.target.files ?? [],
                                         );
-                                        setFiles((current) => [
-                                            ...current,
+                                        setData('files', [
+                                            ...data.files,
                                             ...nextFiles,
                                         ]);
                                         event.target.value = '';
@@ -169,7 +204,7 @@ export default function UploadBackup() {
                         </div>
                         {hasFiles && (
                             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                {files.map((file, index) => (
+                                {data.files.map((file, index) => (
                                     <div
                                         key={`${file.name}-${file.lastModified}`}
                                         className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3"
@@ -210,8 +245,9 @@ export default function UploadBackup() {
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => {
-                                                setFiles((current) =>
-                                                    current.filter(
+                                                setData(
+                                                    'files',
+                                                    data.files.filter(
                                                         (_, fileIndex) =>
                                                             fileIndex !== index,
                                                     ),
@@ -237,7 +273,10 @@ export default function UploadBackup() {
                                 <Label>Data vault</Label>
                                 <Select
                                     value={dataVault}
-                                    onValueChange={setDataVault}
+                                    onValueChange={(value) => {
+                                        setDataVault(value);
+                                        setFolder('');
+                                    }}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select vault" />
@@ -261,7 +300,7 @@ export default function UploadBackup() {
                                     onValueChange={setFolder}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select folder" />
+                                        <SelectValue placeholder="No folder" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {allFolders
@@ -285,13 +324,13 @@ export default function UploadBackup() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Storage class</Label>
+                                <Label>Storage class (optional)</Label>
                                 <Select
                                     value={storageClass}
                                     onValueChange={setStorageClass}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select class" />
+                                        <SelectValue placeholder="No preference" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {storageClasses.map((item) => (
@@ -304,7 +343,7 @@ export default function UploadBackup() {
                             </div>
                         </div>
                         <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-                            Files selected: {files.length} · Total size:{' '}
+                            Files selected: {data.files.length} · Total size:{' '}
                             {formattedTotalGB} GB
                         </div>
                     </div>
@@ -325,7 +364,12 @@ export default function UploadBackup() {
                         </Button>
                     )}
                     {step === 2 && (
-                        <Button disabled={!canContinue}>Upload backup</Button>
+                        <Button
+                            disabled={!canContinue || processing}
+                            onClick={handleSubmit}
+                        >
+                            Upload backup
+                        </Button>
                     )}
                 </div>
                 <Dialog

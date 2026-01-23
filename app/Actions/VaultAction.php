@@ -12,6 +12,12 @@ class VaultAction
     {
         ray('Action Called');
         $data = [$vaultName, $vaultLocation, $wormProtection, $encryption, $deleteProtection];
+        if (app()->environment('local')) {
+            CreateVaultJob::dispatchSync($data);
+
+            return;
+        }
+
         dispatch(new CreateVaultJob($data));
     }
 

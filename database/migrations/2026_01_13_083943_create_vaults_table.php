@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('aws_bucket_name');
             $table->string('aws_bucket_arn');
-            $table->string('region');
             $table->string('location');
             $table->boolean('worm_protection')->default(true);
             $table->boolean('delete_protection')->default(true);
