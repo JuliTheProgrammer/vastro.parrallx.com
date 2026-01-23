@@ -69,7 +69,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     <div className="flex h-full flex-col justify-between text-sm">
                                         <div className="flex flex-col space-y-4">
                                             {mainNavItems.map((item) => (
-                                                <Link key={item.title} href={item.href} className="flex items-center space-x-2 font-medium">
+                                                <Link key={item.title} href={toUrl(item.href)} className="flex items-center space-x-2 font-medium">
                                                     {item.icon && <item.icon className="h-5 w-5" />}
                                                     <span>{item.title}</span>
                                                 </Link>
@@ -96,7 +96,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                         </Sheet>
                     </div>
 
-                    <Link href={dashboard()} prefetch className="flex items-center space-x-2">
+                    <Link href={toUrl(dashboard())} prefetch className="flex items-center space-x-2">
                         <AppLogo />
                     </Link>
 
@@ -107,7 +107,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 {mainNavItems.map((item, index) => (
                                     <NavigationMenuItem key={index} className="relative flex h-full items-center">
                                         <Link
-                                            href={item.href}
+                                            href={toUrl(item.href)}
                                             className={cn(
                                                 navigationMenuTriggerStyle(),
                                                 whenCurrentUrl(item.href, activeItemStyles),
