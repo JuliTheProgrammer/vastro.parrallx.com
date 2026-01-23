@@ -8,9 +8,10 @@ use App\Models\User;
 
 class VaultAction
 {
-    public function createVault($vaultName, $vaultLocation, $wormProtection = true, $versioning = true, $deleteProtection = true)
+    public function createVault($vaultName, $vaultLocation, $wormProtection = true, $encryption = false, $deleteProtection = true)
     {
-        $data = [$vaultName, $vaultLocation, $wormProtection, $versioning, $deleteProtection];
+        ray('Action Called');
+        $data = [$vaultName, $vaultLocation, $wormProtection, $encryption, $deleteProtection];
         dispatch(new CreateVaultJob($data));
     }
 

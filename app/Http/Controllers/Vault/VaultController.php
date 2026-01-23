@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Vault;
 
+use App\Actions\VaultAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Vault\VaultStoreRequest;
 use App\Models\Vault;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Inertia\Inertia;
 
 class VaultController extends Controller
@@ -36,8 +38,17 @@ class VaultController extends Controller
         ray('Controller Reached');
         $vaultData = $request->validated();
 
-        ray($vaultData);
+        $vaultName = Arr::get($vaultData, 'name');
+        $vaultLocation = Arr::get($vaultData, 'region');
+        $wormProtection = Arr::get($vaultData, 'wormProtection');
+        $encryption = Arr::get($vaultData, 'encryption');
+        $deleteProtection = Arr::get($vaultData, 'deleteProtection');
 
+        app(VaultAction::class)->createVault($vaultName, $vaultLocation, $wormProtection, $encryption, $deleteProtection);
+
+        return redirect()
+            ->route('vaults.index')
+            ->with('success', 'Vault created.');
     }
 
     /**

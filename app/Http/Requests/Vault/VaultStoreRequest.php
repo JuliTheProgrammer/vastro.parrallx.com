@@ -23,11 +23,10 @@ class VaultStoreRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'location' => 'required',
-            'region' => 'required|string|max:255',
-            'worm-protection' => 'required|boolean',
-            'versioning' => 'required|boolean',
-            'delete-protection' => 'required|boolean',
+            'location' => 'required|string|max:255',
+            'wormProtection' => 'boolean',
+            'encryption' => 'boolean',
+            'deleteProtection' => 'boolean',
         ];
     }
 }

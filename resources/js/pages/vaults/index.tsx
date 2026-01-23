@@ -18,6 +18,8 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { toUrl } from '@/lib/utils';
+import { store } from '@/routes/vaults';
 import { Head, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
@@ -86,7 +88,7 @@ export default function DataVaults({ vaults = [] }: Props) {
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
 
-        post('/vaults', {
+        post(toUrl(store()), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
@@ -177,9 +179,13 @@ export default function DataVaults({ vaults = [] }: Props) {
                                     <Label>Location</Label>
                                     <Select
                                         value={data.location}
-                                        onValueChange={(value) =>
-                                            setData('location', value)
-                                        }
+                                        onValueChange={(value) => {
+                                            setData('location', value);
+                                            const match = value.match(/\(([^)]+)\)/);
+                                            if (match?.[1]) {
+                                                setData('region', match[1]);
+                                            }
+                                        }}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select location" />

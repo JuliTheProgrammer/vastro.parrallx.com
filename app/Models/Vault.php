@@ -17,6 +17,24 @@ class Vault extends Model
     /** @use HasFactory<\Database\Factories\VaultFactory> */
     use HasFactory, HasUuid, LogsActivity, SoftDeletes;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'user_id',
+        'name',
+        'aws_bucket_name',
+        'aws_bucket_arn',
+        'region',
+        'location',
+        'worm_protection',
+        'delete_protection',
+        'kms_encryption',
+        'kms_arn',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
