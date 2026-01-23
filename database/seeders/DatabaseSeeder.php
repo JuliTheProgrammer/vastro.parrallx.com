@@ -13,11 +13,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        //        $this->call([
+        //            VaultSeeder::class,
+        //            FolderSeeder::class,
+        //            BackupSeeder::class,
+        //            LinkSeeder::class,
+        //            InvoiceSeeder::class,
+        //        ]);
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Vastro',
+            'email' => 'info@vastro.dev',
+            'password' => 'password',
         ]);
     }
 }

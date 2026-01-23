@@ -3,10 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
+use Laravel\WorkOS\Http\Requests\AuthKitLoginRequest;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+Route::get('/', function (AuthKitLoginRequest $request) {
+    return $request->redirect();
+})->name('home')->middleware('guest');
 
 Route::middleware([
     'auth',
