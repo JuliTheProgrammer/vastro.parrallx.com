@@ -7,6 +7,7 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -36,6 +37,11 @@ class Backup extends Model
     public function folderable(): MorphOne
     {
         return $this->morphOne(Folder::class, 'folderable');
+    }
+
+    public function storageClass(): HasOne
+    {
+        return $this->hasOne(StorageClass::class);
     }
 
     public function getTemporarySignedUrlAtribute(): string

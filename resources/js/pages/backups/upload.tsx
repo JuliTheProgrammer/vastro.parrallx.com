@@ -24,10 +24,10 @@ import { useEffect, useMemo, useState } from 'react';
 
 type Step = 1 | 2;
 
-const storageClasses = ['Standard', 'Infrequent', 'Archive'];
 export default function UploadBackup() {
     const { props } = usePage<{
         vaults?: Array<{ id: number | string; name: string }>;
+        storageClasses?: Array<{ id: number | string; name: string; storage_class: string }>;
         folders?: Array<{
             id: number | string;
             name: string;
@@ -36,6 +36,7 @@ export default function UploadBackup() {
         }>;
     }>();
     const dataVaults = props.vaults ?? [];
+    const storageClasses = props.storageClasses ?? [];
     const allFolders = props.folders ?? [];
     const [step, setStep] = useState<Step>(1);
     const [storageClass, setStorageClass] = useState('');
@@ -293,6 +294,7 @@ export default function UploadBackup() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                            {/*
                             <div className="space-y-2">
                                 <Label>Folder</Label>
                                 <Select
@@ -323,6 +325,7 @@ export default function UploadBackup() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                            */}
                             <div className="space-y-2">
                                 <Label>Storage class (optional)</Label>
                                 <Select
@@ -334,8 +337,11 @@ export default function UploadBackup() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {storageClasses.map((item) => (
-                                            <SelectItem key={item} value={item}>
-                                                {item}
+                                            <SelectItem
+                                                key={item.id}
+                                                value={item.storage_class}
+                                            >
+                                                {item.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

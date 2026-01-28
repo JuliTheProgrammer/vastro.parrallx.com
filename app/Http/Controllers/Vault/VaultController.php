@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Vault;
 use App\Actions\VaultAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Vault\VaultStoreRequest;
+use App\Models\Location;
 use App\Models\Vault;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -18,8 +19,12 @@ class VaultController extends Controller
     public function index()
     {
         $vaults = Vault::all();
+        $locations = Location::query()
+            ->where('active', true)
+            ->orderBy('name')
+            ->get();
 
-        return Inertia::render('vaults/index', compact('vaults'));
+        return Inertia::render('vaults/index', compact('vaults', 'locations'));
     }
 
     public function indexSharedVault(Request $request)
@@ -57,7 +62,7 @@ class VaultController extends Controller
         $encryption = Arr::get($vaultData, 'encryption');
         $deleteProtection = Arr::get($vaultData, 'deleteProtection');
 
-        app(VaultAction::class)->createVault($vaultName, $vaultLocation, $wormProtection, $encryption, $deleteProtection);
+        app(VaultAction::class)->createVault($vaultName, $vaultLocation, $wormProtection, $deleteProtection);
 
         return redirect()
             ->route('vaults.index')

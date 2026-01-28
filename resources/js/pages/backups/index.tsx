@@ -18,14 +18,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -35,17 +27,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { useState } from 'react';
-
-const storageClasses = ['Standard', 'Infrequent', 'Archive'];
 
 const PAGE_SIZE = 50;
 
@@ -171,13 +153,7 @@ type Props = {
 };
 
 export default function BackupsIndex({ vaults = [], folders = [], backups = [] }: Props) {
-    const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
-    const [isUploadOpen, setIsUploadOpen] = useState(false);
-    const [dropTarget, setDropTarget] = useState<string | null>(null);
-    const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
-    const [storageClass, setStorageClass] = useState('');
     const { tree, parentMap } = buildTree(vaults, folders, backups);
-    const parentLocations = ['All Backups', ...vaults.map((vault) => vault.name)];
     const rootNode: TreeNode = {
         kind: 'vault',
         vault: { id: 'all', name: 'All Vaults' },
@@ -210,7 +186,9 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
 
     const selectedNode = findNode(rootNode, selectedKey) ?? rootNode;
     const selectedChildren =
-        selectedNode.kind === 'backup' ? [] : selectedNode.children;
+        selectedNode.kind === 'backup'
+            ? []
+            : selectedNode.children.filter((child) => child.kind !== 'folder');
 
     return (
         <AppLayout
@@ -245,12 +223,14 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                 className="pl-9"
                             />
                         </div>
+                        {/*
                         <Button
                             variant="outline"
                             onClick={() => setIsCreateFolderOpen(true)}
                         >
                             Create folder
-                            </Button>
+                        </Button>
+                        */}
                         </div>
                 </div>
 
@@ -277,16 +257,14 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                             const label =
                                                 node.kind === 'vault'
                                                     ? node.vault.name
-                                                    : node.kind === 'folder'
-                                                      ? node.folder.name
-                                                      : node.backup.name;
+                                                    : node.backup.name;
                                             const children =
                                                 node.kind === 'backup'
                                                     ? []
                                                     : node.children.filter(
                                                           (child) =>
-                                                              child.kind !==
-                                                              'backup',
+                                                              child.kind ===
+                                                              'vault',
                                                       );
                                             const hasChildren = children.length > 0;
                                             const isExpanded =
@@ -380,11 +358,9 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                     </TableHeader>
                                     <TableBody>
                                         {selectedChildren.map((child) => {
-                                            if (child.kind === 'vault' || child.kind === 'folder') {
+                                            if (child.kind === 'vault') {
                                                 const label =
-                                                    child.kind === 'vault'
-                                                        ? child.vault.name
-                                                        : child.folder.name;
+                                                    child.vault.name;
                                                 return (
                                                     <TableRow
                                                         key={`${child.kind}-${label}`}
@@ -392,23 +368,6 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                             const key = nodeKey(child);
                                                             setSelectedKey(key);
                                                             expandPath(key);
-                                                        }}
-                                                        onDragOver={(event) => {
-                                                            event.preventDefault();
-                                                        }}
-                                                        onDrop={(event) => {
-                                                            if (child.kind !== 'folder') return;
-                                                            event.preventDefault();
-                                                            const files = Array.from(
-                                                                event.dataTransfer.files,
-                                                            );
-                                                            if (!files.length) {
-                                                                return;
-                                                            }
-                                                            setDropTarget(child.folder.name);
-                                                            setDroppedFiles(files);
-                                                            setStorageClass('');
-                                                            setIsUploadOpen(true);
                                                         }}
                                                     >
                                                         <TableCell className="font-medium">
@@ -418,7 +377,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-sm text-muted-foreground">
-                                                            Folder
+                                                            Vault
                                                         </TableCell>
                                                         <TableCell className="text-sm text-muted-foreground">
                                                             —
@@ -527,6 +486,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                         </div>
                     </div>
                 </div>
+                {/*
                 <Dialog
                     open={isCreateFolderOpen}
                     onOpenChange={setIsCreateFolderOpen}
@@ -645,6 +605,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                */}
             </div>
         </AppLayout>
     );

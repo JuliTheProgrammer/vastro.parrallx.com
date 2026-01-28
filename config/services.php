@@ -41,4 +41,7 @@ return [
         'redirect_url' => env('WORKOS_REDIRECT_URL'),
     ],
 
+    'kms' => [
+        'key_id' => env('KMS_ARN'),
+    ],
 ];

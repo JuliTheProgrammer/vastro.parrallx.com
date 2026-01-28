@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\UserStatistics;
 
+use App\Http\Controllers\Controller;
 use App\Models\User_Statistics;
 use Illuminate\Http\Request;
 

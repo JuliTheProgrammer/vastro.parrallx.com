@@ -14,14 +14,14 @@ import {
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Archive, Folder, MessageCircle, Share2, ShieldCheck, UploadCloud } from 'lucide-react';
+import { Archive, Folder, MessageCircle, UploadCloud } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const backupNavItems: NavItem[] = [
     {
-        title: 'Upload Backups',
-        href: '/backups/upload',
-        icon: UploadCloud,
+        title: 'Vaults',
+        href: '/vaults',
+        icon: Archive,
     },
     {
         title: 'All Backups',
@@ -29,10 +29,12 @@ const backupNavItems: NavItem[] = [
         icon: Folder,
     },
     {
-        title: 'Vaults',
-        href: '/vaults',
-        icon: Archive,
+        title: 'Upload Backups',
+        href: '/backups/upload',
+        icon: UploadCloud,
     },
+
+    /*
     {
         title: 'Audit Logs',
         href: '/audits',
@@ -43,6 +45,7 @@ const backupNavItems: NavItem[] = [
         href: '/backups/share',
         icon: Share2,
     },
+     */
 ];
 
 /*

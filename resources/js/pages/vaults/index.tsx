@@ -37,14 +37,16 @@ type Vault = {
 
 type Props = {
     vaults: Vault[];
+    locations: {
+        id: number | string;
+        code: string;
+        name: string;
+        geography: string;
+        AZs: number;
+    }[];
 };
 
-const locations = [
-    'Frankfurt (eu-central-1)',
-    'Dublin (eu-west-1)',
-    'Virginia (us-east-1)',
-];
-export default function DataVaults({ vaults = [] }: Props) {
+export default function DataVaults({ vaults = [], locations = [] }: Props) {
     const [step, setStep] = useState<Step>(1);
 
     const {
@@ -178,25 +180,28 @@ export default function DataVaults({ vaults = [] }: Props) {
                                 <div className="space-y-2">
                                     <Label>Location</Label>
                                     <Select
-                                        value={data.location}
+                                        value={data.region}
                                         onValueChange={(value) => {
-                                            setData('location', value);
-                                            const match = value.match(/\(([^)]+)\)/);
-                                            if (match?.[1]) {
-                                                setData('region', match[1]);
-                                            }
+                                            const selectedLocation = locations.find(
+                                                (location) => location.code === value
+                                            );
+                                            setData('region', value);
+                                            setData(
+                                                'location',
+                                                selectedLocation?.name ?? value
+                                            );
                                         }}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select location" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {locations.map((item) => (
+                                            {locations.map((location) => (
                                                 <SelectItem
-                                                    key={item}
-                                                    value={item}
+                                                    key={location.code}
+                                                    value={location.code}
                                                 >
-                                                    {item}
+                                                    {location.name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -226,19 +231,6 @@ export default function DataVaults({ vaults = [] }: Props) {
                                     <span>WORM Protection</span>
                                     <span className="text-xs text-muted-foreground">
                                         Recommended
-                                    </span>
-                                </label>
-
-                                <label className="flex items-center gap-2 text-sm">
-                                    <Checkbox
-                                        checked={data.encryption}
-                                        onCheckedChange={(v) =>
-                                            setData('encryption', Boolean(v))
-                                        }
-                                    />
-                                    <span>Custom Encryption Key</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        Only for PRO · Recommended
                                     </span>
                                 </label>
 
@@ -329,8 +321,6 @@ export default function DataVaults({ vaults = [] }: Props) {
                                 <TableRow>
                                     <TableHead>Name</TableHead>
                                     <TableHead>WORM Protection</TableHead>
-                                    <TableHead>Custom Encryption Key</TableHead>
-                                    <TableHead>Versioning</TableHead>
                                     <TableHead>Delete Protection</TableHead>
                                     <TableHead>Location</TableHead>
                                 </TableRow>
@@ -343,16 +333,6 @@ export default function DataVaults({ vaults = [] }: Props) {
                                         </TableCell>
                                         <TableCell>
                                             {vault.worm_protection ? 'Enabled' : 'Off'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {vault.encryption
-                                                ? 'Enabled'
-                                                : 'Off'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {vault.versioning
-                                                ? 'Enabled'
-                                                : 'Off'}
                                         </TableCell>
                                         <TableCell>
                                             {vault.delete_protection

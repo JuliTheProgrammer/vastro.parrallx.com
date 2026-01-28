@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Vault;
 
+use App\Models\Location;
 use App\Models\User;
 use App\Models\Vault;
 use Aws\S3\S3Client;
@@ -40,7 +41,6 @@ class CreateVaultJob implements ShouldQueue
 
         $bucketName = $this->generateBucketName(Arr::get($this->vaultData, 0));
 
-        // put tags on the bucket as well
         $bucket = $s3Client->createBucket([
             'Bucket' => $bucketName,
             'ObjectLockEnabledForBucket' => Arr::get($this->vaultData, 3),
@@ -49,7 +49,7 @@ class CreateVaultJob implements ShouldQueue
         $s3Client->waitUntil('BucketExists', ['Bucket' => $bucketName]);
 
         // bucket versioning
-        if (Arr::get($this->vaultData, 4)) {
+        if (Arr::get($this->vaultData, 2)) {
             $s3Client->putBucketVersioning([
                 'Bucket' => $bucketName,
                 'VersioningConfiguration' => [
@@ -58,16 +58,27 @@ class CreateVaultJob implements ShouldQueue
             ]);
         }
 
+        // put tags on buckets
+
         ray($bucket);
 
         ray(Arr::get($bucket, 'BucketArn'));
 
+        $location = Arr::get($this->vaultData, 1);
+
+        $locationCode = $this->resolveLocationCode($location);
+
+        ray($locationCode);
+        ray($location);
+
         Vault::create([
-            'user_id' => Auth::id() ?? 1, // Later change to the current Auth user
+            'user_id' => Auth::id(), // Later change to the current Auth user
             'name' => Arr::get($this->vaultData, 0),
             'aws_bucket_name' => $bucketName,
             'aws_bucket_arn' => Arr::get($bucket, 'BucketArn'),
-            'location' => Arr::get($this->vaultData, 1),
+            'worm_protection' => Arr::get($this->vaultData, 2),
+            'delete_protection' => Arr::get($this->vaultData, 3),
+            'location' => $locationCode,
         ]);
 
     }
@@ -81,6 +92,14 @@ class CreateVaultJob implements ShouldQueue
 
         // take the user uuid as a prefix, currently substituted through a Str::uuid
         return "{$user}-{$uuid}";
+    }
+
+    protected function resolveLocationCode(string $code): string
+    {
+        return Location::query()
+            ->where('code', $code)
+            ->firstOrFail()
+            ->code;
     }
 
     public function failed(Exception $exception)

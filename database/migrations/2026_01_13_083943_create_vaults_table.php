@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -19,9 +20,9 @@ return new class extends Migration
             $table->string('name');
             $table->string('aws_bucket_name');
             $table->string('aws_bucket_arn');
-            $table->string('location');
-            $table->boolean('worm_protection')->default(true);
-            $table->boolean('delete_protection')->default(true);
+            $table->foreignIdFor(Location::class)->constrained()->restrictOnDelete();
+            $table->boolean('worm_protection');
+            $table->boolean('delete_protection');
             $table->boolean('kms_encryption')->default(false);
             $table->string('kms_arn')->nullable();
             $table->softDeletes();

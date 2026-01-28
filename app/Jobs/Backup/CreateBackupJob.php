@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Backup;
 
+use App\Jobs\KMS\EncryptDataJob;
 use App\Models\Backup;
 use App\Models\Vault;
 use Aws\S3\S3Client;
@@ -13,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -25,7 +27,11 @@ class CreateBackupJob implements ShouldQueue
 
     public function handle(): void
     {
-        Gate::authorize('upload', Backup::class);
+        // Gate::authorize('upload', Backup::class);
+
+        // EncryptDataJob::dispatch($this->storedPath);
+
+        ray($this->meta);
 
         $s3Client = new S3Client([
             'version' => 'latest',
@@ -40,7 +46,12 @@ class CreateBackupJob implements ShouldQueue
         $uploadPromise = $transferManager->upload(
             new UploadRequest($absolutePath, [
                 'Bucket' => $this->vault->aws_bucket_name,
-                'Key' => $key, // the key is also with the folders not only the filename
+                'Key' => $key, // the key is also with the folders, not only the filename
+                'StorageClass' => $this->meta['storage_class'],
+                'Tagging' => http_build_query([
+                    'user_id' => Auth::id(),
+                ]
+                ),
             ])
         );
 
@@ -49,11 +60,12 @@ class CreateBackupJob implements ShouldQueue
         Backup::create([
             'backupable_id' => $this->vault->id,
             'backupable_type' => get_class($this->vault),
-            // 'user_id' => 1, // later change this dynamically
+            'user_id' => Auth::user()->id, // later change this dynamically
             'name' => $this->meta['original_name'] ?? 'backup',
             'path' => $this->generateBackupName(),
             'size' => $this->meta['size'] ?? null,
             'mime_type' => $this->meta['mime_type'] ?? null,
+            'storage_class' => $this->meta['storage_class'],
         ]);
 
         Storage::delete($this->storedPath);

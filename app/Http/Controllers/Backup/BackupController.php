@@ -6,6 +6,7 @@ use App\Actions\BackupActions;
 use App\Http\Controllers\Controller;
 use App\Models\Backup;
 use App\Models\Folder;
+use App\Models\StorageClass;
 use App\Models\Vault;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -32,8 +33,11 @@ class BackupController extends Controller
     {
         $vaults = Vault::all();
         $folders = Folder::all();
+        $storageClasses = StorageClass::query()
+            ->orderBy('name')
+            ->get();
 
-        return Inertia::render('backups/upload', compact('vaults', 'folders'));
+        return Inertia::render('backups/upload', compact('vaults', 'folders', 'storageClasses'));
     }
 
     /**
@@ -56,13 +60,14 @@ class BackupController extends Controller
 
         foreach ($request->file('files', []) as $file) {
             ray($file);
-            //            $storedPath = $file->store('backup-uploads');
-            //            $meta = [
-            //                'original_name' => $file->getClientOriginalName(),
-            //                'size' => $file->getSize(),
-            //                'mime_type' => $file->getClientMimeType(),
-            //            ];
-            //            app(BackupActions::class)->uploadBackup($storedPath, $vault, $meta);
+            $storedPath = $file->store('backup-uploads');
+            $meta = [
+                'original_name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'mime_type' => $file->getClientMimeType(),
+                'storage_class' => $validated['storage_class'],
+            ];
+            app(BackupActions::class)->uploadBackup($storedPath, $vault, $meta);
         }
 
         return redirect()

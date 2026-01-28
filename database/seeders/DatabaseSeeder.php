@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         //            InvoiceSeeder::class,
         //        ]);
 
-        $this->call(LocationSeeder::class);
+        $this->call([LocationSeeder::class, StorageClassSeeder::class]);
 
         //        User::factory()->create([
         //            'name' => 'Vastro',
