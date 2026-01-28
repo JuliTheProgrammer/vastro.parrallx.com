@@ -12,20 +12,9 @@ import {
     SidebarMenuItem,
     SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import {
-    Archive,
-    Folder,
-    CreditCard,
-    LifeBuoy,
-    MessageCircle,
-    Settings,
-    Share2,
-    ShieldCheck,
-    UploadCloud,
-} from 'lucide-react';
+import { Archive, Folder, MessageCircle, Share2, ShieldCheck, UploadCloud } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const backupNavItems: NavItem[] = [
@@ -56,6 +45,7 @@ const backupNavItems: NavItem[] = [
     },
 ];
 
+/*
 const accountNavItems: NavItem[] = [
     {
         title: 'Upgrade to Pro',
@@ -67,7 +57,7 @@ const accountNavItems: NavItem[] = [
         href: '/billing',
         icon: CreditCard,
     },
-];
+];*/
 
 const helpNavItems: NavItem[] = [
     // {
@@ -88,12 +78,7 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton
-                            size="lg"
-                            className="cursor-not-allowed opacity-60"
-                        >
-                            <AppLogo />
-                        </SidebarMenuButton>
+                        <AppLogo />
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
@@ -116,27 +101,9 @@ export function AppSidebar() {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
-
             </SidebarContent>
 
             <SidebarFooter>
-                <SidebarGroup className="px-2 py-0">
-                    <SidebarGroupLabel>Account</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {accountNavItems.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton asChild>
-                                        <Link href={item.href}>
-                                            {item.icon && <item.icon />}
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
                 <SidebarGroup className="px-2 py-0">
                     <SidebarGroupLabel>Help Center</SidebarGroupLabel>
                     <SidebarGroupContent>

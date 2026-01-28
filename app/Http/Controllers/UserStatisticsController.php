@@ -1,24 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Link;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Link;
-use App\Models\Vault;
+use App\Models\User_Statistics;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
-class LinkCotroller extends Controller
+class UserStatisticsController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $links = Link::all();
-        $vaults = Vault::all();
-
-        return Inertia::render('backups/share', compact('links', 'vaults'));
+        //
     }
 
     /**
@@ -34,14 +28,13 @@ class LinkCotroller extends Controller
      */
     public function store(Request $request)
     {
-        ray($request);
-
+        //
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Link $link)
+    public function show(User_Statistics $user_Statistics)
     {
         //
     }
@@ -49,7 +42,7 @@ class LinkCotroller extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Link $link)
+    public function edit(User_Statistics $user_Statistics)
     {
         //
     }
@@ -57,7 +50,7 @@ class LinkCotroller extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Link $link)
+    public function update(Request $request, User_Statistics $user_Statistics)
     {
         //
     }
@@ -65,7 +58,7 @@ class LinkCotroller extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Link $link)
+    public function destroy(User_Statistics $user_Statistics)
     {
         //
     }

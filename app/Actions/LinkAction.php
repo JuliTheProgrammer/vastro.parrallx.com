@@ -23,4 +23,13 @@ class LinkAction
             route('backups.index', $backup), now()->addMinutes(10)
         );
     }
+
+    public function createLinkForVaultId(string $VaultId)
+    {
+        $backup = Backup::firstOrFail('id', $VaultId);
+
+        return URL::temporarySignedRoute(
+            route('vaults.index', $backup), now()->addMinutes(10)
+        );
+    }
 }

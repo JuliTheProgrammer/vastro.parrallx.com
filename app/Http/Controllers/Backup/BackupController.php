@@ -56,13 +56,13 @@ class BackupController extends Controller
 
         foreach ($request->file('files', []) as $file) {
             ray($file);
-            $storedPath = $file->store('backup-uploads');
-            $meta = [
-                'original_name' => $file->getClientOriginalName(),
-                'size' => $file->getSize(),
-                'mime_type' => $file->getClientMimeType(),
-            ];
-            app(BackupActions::class)->uploadBackup($storedPath, $vault, $meta);
+            //            $storedPath = $file->store('backup-uploads');
+            //            $meta = [
+            //                'original_name' => $file->getClientOriginalName(),
+            //                'size' => $file->getSize(),
+            //                'mime_type' => $file->getClientMimeType(),
+            //            ];
+            //            app(BackupActions::class)->uploadBackup($storedPath, $vault, $meta);
         }
 
         return redirect()

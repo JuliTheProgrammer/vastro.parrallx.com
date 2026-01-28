@@ -7,6 +7,7 @@ use App\Models\Vault;
 use Aws\S3\S3Client;
 use Aws\S3\S3Transfer\Models\UploadRequest;
 use Aws\S3\S3Transfer\S3TransferManager;
+use Illuminate\Auth\Access\Gate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -24,6 +25,8 @@ class CreateBackupJob implements ShouldQueue
 
     public function handle(): void
     {
+        Gate::authorize('upload', Backup::class);
+
         $s3Client = new S3Client([
             'version' => 'latest',
             'region' => $this->vault->region,

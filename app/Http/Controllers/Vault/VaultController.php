@@ -13,13 +13,26 @@ use Inertia\Inertia;
 class VaultController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource. This is for users of the application only
      */
     public function index()
     {
         $vaults = Vault::all();
 
         return Inertia::render('vaults/index', compact('vaults'));
+    }
+
+    public function indexSharedVault(Request $request)
+    {
+        abort_if(! $request->hasValidRelativeSignature());
+
+        $validated = $request->validate([
+            'vault_id' => 'required',
+        ]);
+
+        $vault = Vault::find($validated['vault_id']);
+
+        return Inertia::render('vaults/sharedVaults', compact('vault'));
     }
 
     /**

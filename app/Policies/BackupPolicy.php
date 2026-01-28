@@ -29,6 +29,21 @@ class BackupPolicy
      */
     public function create(User $user): bool
     {
+        // check if the user is allowed to back up
+        if ($user->userStatistics()->total_stored_megaBytes >= 1000000) { // 1 TB
+            return false;
+        }
+
+        return true;
+    }
+
+    public function upload(User $user, Backup $backup): bool
+    {
+        // check if the user is allowed to back up
+        if ($user->userStatistics()->total_stored_megaBytes >= 1000000 || ! $user->userStatistics()->account_blocked) { // 1 TB
+            return false;
+        }
+
         return true;
     }
 

@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -63,5 +64,10 @@ class User extends Authenticatable
     public function links(): MorphMany
     {
         return $this->morphMany(Link::class, 'linkable');
+    }
+
+    public function userStatistics(): HasOne
+    {
+        return $this->hasOne(UserStatistics::class);
     }
 }

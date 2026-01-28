@@ -313,7 +313,7 @@ export default function DataVaults({ vaults = [] }: Props) {
                         )}
                         {recentlySuccessful && (
                             <div className="text-xs text-muted-foreground">
-                                Created ✅
+                                Vault Created
                             </div>
                         )}
                     </div>

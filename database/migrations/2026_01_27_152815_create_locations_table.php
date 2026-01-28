@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('backups', function (Blueprint $table) {
+        Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->unique();
-            $table->morphs('backupable');
+            $table->string('code');
             $table->string('name');
-            $table->string('path');
-            $table->string('mime_type');
-            $table->integer('size_megaBytes');
-            $table->softDeletes();
+            $table->tinyInteger('AZs');
+            $table->string('geography');
+            $table->boolean('active');
             $table->timestamps();
         });
     }
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('backups');
+        Schema::dropIfExists('location');
     }
 };

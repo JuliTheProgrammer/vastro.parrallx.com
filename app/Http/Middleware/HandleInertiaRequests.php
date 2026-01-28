@@ -35,9 +35,12 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $logo = config('app.logo');
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'logo' => $logo ?: '/logo.svg',
             'auth' => [
                 'user' => $request->user(),
             ],

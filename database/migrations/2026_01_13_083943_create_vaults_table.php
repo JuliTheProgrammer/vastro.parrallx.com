@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('vaults', function (Blueprint $table) {
-            $table->id()->primary();
+            $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignIdFor(User::class)->constrained()->restrictOnDelete();
             $table->string('name');

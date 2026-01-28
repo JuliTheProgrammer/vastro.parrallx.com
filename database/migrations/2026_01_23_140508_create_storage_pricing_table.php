@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Vault;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,17 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('folders', function (Blueprint $table) {
+        Schema::create('storage_pricing', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignIdFor(Vault::class)->constrained()->restrictOnDelete();
-            $table->morphs('folderable'); // direct child of that model
             $table->string('name');
+            $table->string('price');
+            $table->string('currency');
+            $table->string('notes')->nullable();
             $table->string('location');
-            $table->string('aws_path');
-            $table->string('storage_class')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -31,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('folders');
+        Schema::dropIfExists('storage_pricing');
     }
 };

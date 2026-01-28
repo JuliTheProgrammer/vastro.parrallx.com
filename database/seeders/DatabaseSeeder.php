@@ -21,10 +21,12 @@ class DatabaseSeeder extends Seeder
         //            InvoiceSeeder::class,
         //        ]);
 
-        User::factory()->create([
-            'name' => 'Vastro',
-            'email' => 'info@vastro.dev',
-            'password' => 'password',
-        ]);
+        $this->call(LocationSeeder::class);
+
+        //        User::factory()->create([
+        //            'name' => 'Vastro',
+        //            'email' => 'info@vastro.dev',
+        //            'password' => 'password',
+        //        ]);
     }
 }
