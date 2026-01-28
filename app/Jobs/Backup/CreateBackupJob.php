@@ -4,6 +4,7 @@ namespace App\Jobs\Backup;
 
 use App\Jobs\KMS\EncryptDataJob;
 use App\Models\Backup;
+use App\Models\StorageClass;
 use App\Models\Vault;
 use Aws\S3\S3Client;
 use Aws\S3\S3Transfer\Models\UploadRequest;
@@ -55,6 +56,15 @@ class CreateBackupJob implements ShouldQueue
             ])
         );
 
+        ray($this->meta['storage_class']);
+
+        $storageClassId = StorageClass::query()
+            ->where('storage_class', $this->meta['storage_class'])
+            ->firstOrFail()
+            ->id;
+
+        ray($storageClassId);
+
         // define the storage class, if user did select one, if not take the one from the folder
 
         Backup::create([
@@ -63,9 +73,9 @@ class CreateBackupJob implements ShouldQueue
             'user_id' => Auth::user()->id, // later change this dynamically
             'name' => $this->meta['original_name'] ?? 'backup',
             'path' => $this->generateBackupName(),
-            'size' => $this->meta['size'] ?? null,
+            'size_megaBytes' => $this->meta['size'] ?? null,
             'mime_type' => $this->meta['mime_type'] ?? null,
-            'storage_class' => $this->meta['storage_class'],
+            'storage_class_id' => $storageClassId,
         ]);
 
         Storage::delete($this->storedPath);

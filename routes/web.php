@@ -19,7 +19,7 @@ Route::middleware([
     ValidateSessionWithWorkOS::class,
 ])->group(function () {
     Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
+        return Inertia::render('vaults/index');
     })->name('dashboard');
 });
 

@@ -31,7 +31,11 @@ import { useState } from 'react';
 
 const PAGE_SIZE = 50;
 
-type Vault = { id: number | string; name: string };
+type Vault = {
+    id: number | string;
+    name: string;
+    worm_protection?: boolean | null;
+};
 type Folder = {
     id: number | string;
     name: string;
@@ -71,6 +75,17 @@ const previewIcon = (mimeType?: string | null) => {
     if (mimeType.startsWith('image/')) return ImageIcon;
     if (mimeType.startsWith('video/')) return Video;
     return FileText;
+};
+
+const formatDate = (value?: string | null) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    }).format(date);
 };
 
 const parentKey = (type: string, id: number | string) => `${type}:${id}`;
@@ -154,6 +169,7 @@ type Props = {
 
 export default function BackupsIndex({ vaults = [], folders = [], backups = [] }: Props) {
     const { tree, parentMap } = buildTree(vaults, folders, backups);
+    const vaultById = new Map(vaults.map((vault) => [String(vault.id), vault]));
     const rootNode: TreeNode = {
         kind: 'vault',
         vault: { id: 'all', name: 'All Vaults' },
@@ -393,6 +409,11 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                             }
 
                                             const Icon = previewIcon(child.backup.mime_type);
+                                            const vault =
+                                                child.backup.backupable_type === 'App\\Models\\Vault'
+                                                    ? vaultById.get(String(child.backup.backupable_id))
+                                                    : null;
+                                            const isVersioned = Boolean(vault?.worm_protection);
                                             return (
                                                 <TableRow key={`backup-${child.backup.id}`}>
                                                     <TableCell className="font-medium">
@@ -410,14 +431,20 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                            <Lock className="h-4 w-4" />
-                                                            <span className="capitalize">
-                                                                versioned
-                                                            </span>
+                                                            {isVersioned ? (
+                                                                <>
+                                                                    <Lock className="h-4 w-4" />
+                                                                    <span className="capitalize">
+                                                                        versioned
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <span>—</span>
+                                                            )}
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-sm text-muted-foreground">
-                                                        {child.backup.created_at ?? '—'}
+                                                        {formatDate(child.backup.created_at)}
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <DropdownMenu>

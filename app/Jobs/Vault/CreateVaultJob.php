@@ -66,9 +66,8 @@ class CreateVaultJob implements ShouldQueue
 
         $location = Arr::get($this->vaultData, 1);
 
-        $locationCode = $this->resolveLocationCode($location);
+        $locationId = Location::where('code', $location)->firstOrFail()->id;
 
-        ray($locationCode);
         ray($location);
 
         Vault::create([
@@ -78,7 +77,7 @@ class CreateVaultJob implements ShouldQueue
             'aws_bucket_arn' => Arr::get($bucket, 'BucketArn'),
             'worm_protection' => Arr::get($this->vaultData, 2),
             'delete_protection' => Arr::get($this->vaultData, 3),
-            'location' => $locationCode,
+            'location_id' => $locationId,
         ]);
 
     }

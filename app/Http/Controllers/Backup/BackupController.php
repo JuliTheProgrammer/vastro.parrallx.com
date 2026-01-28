@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Backup;
 
 use App\Actions\BackupActions;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Backup\BackupRequest;
 use App\Models\Backup;
 use App\Models\Folder;
 use App\Models\StorageClass;
 use App\Models\Vault;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -43,23 +43,13 @@ class BackupController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(BackupRequest $request)
     {
-        ray($request);
-        ray('Backup Controller Store');
-        $validated = $request->validate([
-            'files' => ['required', 'array', 'min:1'],
-            'files.*' => ['file'],
-            'vault_id' => ['required', 'exists:vaults,id'],
-            'folder_id' => ['nullable', 'exists:folders,id'],
-            'storage_class' => ['nullable', 'string', 'max:100'],
-        ]);
-        ray($validated);
+        $validated = $request->validated();
 
         $vault = Vault::findOrFail($validated['vault_id']);
 
         foreach ($request->file('files', []) as $file) {
-            ray($file);
             $storedPath = $file->store('backup-uploads');
             $meta = [
                 'original_name' => $file->getClientOriginalName(),
