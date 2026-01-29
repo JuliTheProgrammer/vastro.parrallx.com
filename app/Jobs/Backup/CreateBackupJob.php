@@ -9,12 +9,14 @@ use App\Models\Vault;
 use Aws\S3\S3Client;
 use Aws\S3\S3Transfer\Models\UploadRequest;
 use Aws\S3\S3Transfer\S3TransferManager;
+use Aws\Sdk;
 use Illuminate\Auth\Access\Gate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -32,11 +34,26 @@ class CreateBackupJob implements ShouldQueue
 
         // EncryptDataJob::dispatch($this->storedPath);
 
+        $sdk = new Sdk([
+            'region' => Arr::get($this->vaultData, 1),
+        ]);
+
+        $stsClient = $sdk->createSts();
+
+        // assume role
+
+        $result = $stsClient->getSessionToken();
+
         ray($this->meta);
 
         $s3Client = new S3Client([
             'version' => 'latest',
             'region' => $this->vault->region,
+            'credentials' => [
+                'key' => $result['Credentials']['AccessKeyId'],
+                'secret' => $result['Credentials']['SecretAccessKey'],
+                'token' => $result['Credentials']['SessionToken'],
+            ],
         ]);
 
         $transferManager = new S3TransferManager($s3Client);

@@ -6,6 +6,7 @@ use App\Models\Location;
 use App\Models\User;
 use App\Models\Vault;
 use Aws\S3\S3Client;
+use Aws\Sdk;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -33,8 +34,26 @@ class CreateVaultJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $sdk = new Sdk([
+            'region' => Arr::get($this->vaultData, 1),
+        ]);
+
+        $stsClient = $sdk->createSts();
+
+        // assume role
+
+        $result = $stsClient->getSessionToken();
+
         ray($this->vaultData);
-        $s3Client = new S3Client(['region' => Arr::get($this->vaultData, 1)]); // change the region dynamic
+        $s3Client = new S3Client(
+            [
+                'region' => Arr::get($this->vaultData, 1),
+                'credentials' => [
+                    'key' => $result['Credentials']['AccessKeyId'],
+                    'secret' => $result['Credentials']['SecretAccessKey'],
+                    'token' => $result['Credentials']['SessionToken'],
+                ],
+            ]);
 
         activity('Request POST')
             ->log('request to create bucket');
