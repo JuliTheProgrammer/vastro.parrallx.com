@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('backups/upload', [BackupController::class, 'create'])->name('backups.upload');
     Route::post('backups', [BackupController::class, 'store'])->name('backups.store');
+    Route::get('backups/{id}', [BackupController::class, 'show'])->name('backups.show');
 
     Route::get('links', [LinkCotroller::class, 'index'])->name('links.index');
     Route::get('backups/share', function () {

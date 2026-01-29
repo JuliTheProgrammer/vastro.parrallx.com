@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backup;
 use App\Actions\BackupActions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Backup\BackupRequest;
+use App\Jobs\Backup\GetPresignedURLJob;
 use App\Models\Backup;
 use App\Models\Folder;
 use App\Models\StorageClass;
@@ -68,9 +69,12 @@ class BackupController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Backup $backup)
+    public function show($id)
     {
-        //
+        ray('Controller Backup show reached');
+        $backup = Backup::where('id', $id)->firstOrFail();
+        ray($backup);
+        dispatch(new GetPresignedURLJob($backup->id));
     }
 
     /**

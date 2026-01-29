@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Actions\LinkAction;
+use App\Observers\BackupObserver;
 use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+#[ObservedBy(BackupObserver::class)]
 class Backup extends Model
 {
     /** @use HasFactory<\Database\Factories\BackupFactory> */

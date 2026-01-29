@@ -19,9 +19,10 @@ return new class extends Migration
             $table->foreignIdFor(StorageClass::class)->constrained()->restrictOnDelete();
             $table->foreignIdFor(User::class)->constrained()->restrictOnDelete();
             $table->morphs('backupable');
-            $table->string('name')->unique();
-            $table->string('path');
+            $table->string('name');
+            $table->string('path')->unique();
             $table->string('mime_type');
+            $table->string('mime_type_readable');
             $table->integer('size_megaBytes');
             $table->softDeletes();
             $table->timestamps();

@@ -44,6 +44,7 @@ type Folder = {
     storage_class?: string | null;
 };
 type Backup = {
+    mime_type_readable: string;
     id: number | string;
     name: string;
     mime_type?: string | null;
@@ -416,17 +417,13 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                             const isVersioned = Boolean(vault?.worm_protection);
                                             return (
                                                 <TableRow key={`backup-${child.backup.id}`}>
-                                                    <TableCell className="font-medium">
-                                                        {child.backup.name}
-                                                    </TableCell>
+                                                    <TableCell className="font-medium">{child.backup.name}</TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2 text-muted-foreground">
                                                             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
                                                                 <Icon className="h-4 w-4" />
                                                             </span>
-                                                            <span className="text-xs font-medium">
-                                                                {child.backup.mime_type ?? 'File'}
-                                                            </span>
+                                                            <span className="text-xs font-medium">{child.backup.mime_type_readable ?? 'File'}</span>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>
@@ -434,9 +431,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                             {isVersioned ? (
                                                                 <>
                                                                     <Lock className="h-4 w-4" />
-                                                                    <span className="capitalize">
-                                                                        versioned
-                                                                    </span>
+                                                                    <span className="capitalize">versioned</span>
                                                                 </>
                                                             ) : (
                                                                 <span>—</span>
@@ -451,33 +446,16 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                             <DropdownMenuTrigger asChild>
                                                                 <Button variant="ghost" size="icon">
                                                                     <MoreHorizontal className="h-4 w-4" />
-                                                                    <span className="sr-only">
-                                                                        More actions
-                                                                    </span>
+                                                                    <span className="sr-only">More actions</span>
                                                                 </Button>
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
-                                                                <DropdownMenuItem asChild>
-                                                                    <Link href="#">
-                                                                        Download
-                                                                    </Link>
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem asChild>
-                                                                    <Link href="#">
-                                                                        Share
-                                                                    </Link>
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem asChild>
-                                                                    <Link
-                                                                        href={`/backups/versions?backup=${child.backup.id}`}
-                                                                    >
-                                                                        View versions
-                                                                    </Link>
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem asChild>
-                                                                    <Link href="#">
-                                                                        Delete
-                                                                    </Link>
+                                                                <DropdownMenuItem
+                                                                    onSelect={() => {
+                                                                        window.location.href = `/backups/${child.backup.id}`;
+                                                                    }}
+                                                                >
+                                                                    View backup
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>

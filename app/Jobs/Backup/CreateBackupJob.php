@@ -41,7 +41,7 @@ class CreateBackupJob implements ShouldQueue
 
         $transferManager = new S3TransferManager($s3Client);
         $absolutePath = Storage::path($this->storedPath);
-        $key = Str::uuid()->toString();
+        $key = $this->generateBackupName();
 
         // also put tags onto the object
         $uploadPromise = $transferManager->upload(
@@ -72,7 +72,7 @@ class CreateBackupJob implements ShouldQueue
             'backupable_type' => get_class($this->vault),
             'user_id' => Auth::user()->id, // later change this dynamically
             'name' => $this->meta['original_name'] ?? 'backup',
-            'path' => $this->generateBackupName(),
+            'path' => $key,
             'size_megaBytes' => $this->meta['size'] ?? null,
             'mime_type' => $this->meta['mime_type'] ?? null,
             'storage_class_id' => $storageClassId,

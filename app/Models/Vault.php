@@ -56,7 +56,7 @@ class Vault extends Model
         return $this->belongsTo(Folder::class);
     }
 
-    public function locations(): HasOne
+    public function location(): HasOne
     {
         return $this->hasOne(Location::class);
     }

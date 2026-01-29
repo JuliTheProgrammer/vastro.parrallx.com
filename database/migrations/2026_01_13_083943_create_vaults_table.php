@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignIdFor(User::class)->constrained()->restrictOnDelete();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->string('aws_bucket_name');
             $table->string('aws_bucket_arn');
             $table->foreignIdFor(Location::class)->constrained()->restrictOnDelete();

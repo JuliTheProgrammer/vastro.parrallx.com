@@ -2,23 +2,30 @@
 
 namespace App\Observers;
 
+use App\Helper\MimeHelper;
 use App\Models\Backup;
 use Illuminate\Support\Facades\Auth;
 
 class BackupObserver
 {
+    public function creating(Backup $backup): void
+    {
+        $readableExtension = MimeHelper::convertMimeType($backup->mime_type);
+        $backup->mime_type_readable = $readableExtension;
+    }
+
     /**
      * Handle the Backup "created" event.
      */
-    public function created(Backup $backup): void
-    {
-        $user = Auth::user();
-        $user->userStatistics()->total_stored_megaBytes += $backup->size;
-
-        $user->userStatistics()->backup_count++;
-
-        $user->userStatistics()->save();
-    }
+    //    public function created(Backup $backup): void
+    //    {
+    //        $user = Auth::user();
+    //        $user->userStatistics()->total_stored_megaBytes += $backup->size;
+    //
+    //        $user->userStatistics()->backup_count++;
+    //
+    //        $user->userStatistics()->save();
+    //    }
 
     /**
      * Handle the Backup "updated" event.

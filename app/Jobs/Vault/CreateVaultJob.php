@@ -90,7 +90,7 @@ class CreateVaultJob implements ShouldQueue
         $uuid = Str::uuid()->toString();
 
         // take the user uuid as a prefix, currently substituted through a Str::uuid
-        return "{$user}-{$uuid}";
+        return "vault-{$user}-{$uuid}";
     }
 
     protected function resolveLocationCode(string $code): string

@@ -20,6 +20,9 @@
         })();
     </script>
 
+    <link href="https://cdn.jsdelivr.net/npm/dropzone@5.9.3/dist/min/dropzone.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/dropzone@5.9.3/dist/min/dropzone.min.js"></script>
+
     {{-- Inline style to set the HTML background color based on our theme in app.css --}}
     <style>
         html {
@@ -50,7 +53,7 @@
 </head>
 
 <body class="font-sans antialiased">
-    @inertia
+@inertia
 </body>
 
 </html>
