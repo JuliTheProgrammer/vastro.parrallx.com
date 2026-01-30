@@ -3,10 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn, toUrl } from '@/lib/utils';
 import { useActiveUrl } from '@/hooks/use-active-url';
-import { edit as editAppearance } from '@/routes/appearance';
-import { edit } from '@/routes/profile';
-import { show } from '@/routes/two-factor';
-import { edit as editPassword } from '@/routes/user-password';
+import { appearance } from '@/routes';
+import { edit as editProfile } from '@/routes/profile';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
@@ -14,22 +12,12 @@ import { type PropsWithChildren } from 'react';
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
-        href: edit(),
-        icon: null,
-    },
-    {
-        title: 'Password',
-        href: editPassword(),
-        icon: null,
-    },
-    {
-        title: 'Two-Factor Auth',
-        href: show(),
+        href: editProfile(),
         icon: null,
     },
     {
         title: 'Appearance',
-        href: editAppearance(),
+        href: appearance(),
         icon: null,
     },
 ];

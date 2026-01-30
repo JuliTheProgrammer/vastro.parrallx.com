@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Scout\Searchable;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -20,7 +21,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Backup extends Model
 {
     /** @use HasFactory<\Database\Factories\BackupFactory> */
-    use HasFactory, HasUuid, LogsActivity, SoftDeletes;
+    use HasFactory, HasUuid, LogsActivity, Searchable, SoftDeletes;
 
     public function user(): BelongsTo
     {
@@ -50,6 +51,15 @@ class Backup extends Model
     public function getTemporarySignedUrlAtribute(): string
     {
         return app(LinkAction::class)->createLinkForBackup($this);
+    }
+
+    public function toSearchableArray(): array
+    {
+        return [
+            'name' => $this->name,
+            'mime_type' => $this->mime_type,
+            'created_at' => $this->created_at,
+        ];
     }
 
     public function getActivitylogOptions(): LogOptions

@@ -6,11 +6,11 @@ export default function AppLogo() {
 
     return (
         <>
-            <div className="ml-1 flex items-center text-left text-sm">
+            <div className="ml-1 flex gap-1 items-center text-left text-sm">
                 <img
                     src={logo || '/logo.svg'}
                     alt="Parallax logo"
-                    className="h-12 w-12 object-cover"
+                    className="h-6 w-6 object-cover"
                 />
                 <span className="mb-0.5 truncate leading-tight font-semibold">Parallax</span>
             </div>
