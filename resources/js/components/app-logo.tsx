@@ -8,7 +8,7 @@ export default function AppLogo() {
         <>
             <div className="ml-1 flex gap-1 items-center text-left text-sm">
                 <img
-                    src={logo || '/logo.svg'}
+                    src={logo || '/parrallx_logo.png'}
                     alt="Parallax logo"
                     className="h-6 w-6 object-cover"
                 />

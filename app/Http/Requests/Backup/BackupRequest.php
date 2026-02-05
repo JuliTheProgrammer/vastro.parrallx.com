@@ -22,8 +22,13 @@ class BackupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'files' => 'required|array|min:1',
+            'files' => 'required_without:uploads|array|min:1',
             'files.*' => 'file',
+            'uploads' => 'required_without:files|array|min:1',
+            'uploads.*.path' => 'required|string|max:2048',
+            'uploads.*.original_name' => 'required|string|max:255',
+            'uploads.*.size' => 'required|integer|min:1',
+            'uploads.*.mime_type' => 'required|string|max:255',
             'vault_id' => 'required|exists:vaults,id',
             'folder_id' => 'nullable|exists:folders,id',
             'storage_class' => 'nullable|string|max:100',

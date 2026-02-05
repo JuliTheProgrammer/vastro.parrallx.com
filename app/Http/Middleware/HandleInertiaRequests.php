@@ -36,11 +36,20 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $logo = config('app.logo');
+        $logoUrl = $logo ?: '/logo.svg';
+        if ($logoUrl && ! str_starts_with($logoUrl, 'http')) {
+            $publicPath = public_path(ltrim($logoUrl, '/'));
+            if (! file_exists($publicPath)) {
+                $logoUrl = '/logo.svg';
+            }
+
+            $logoUrl = asset($logoUrl);
+        }
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'logo' => $logo ?: '/logo.svg',
+            'logo' => $logoUrl,
             'auth' => [
                 'user' => $request->user(),
             ],

@@ -16,7 +16,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -35,7 +34,7 @@ class CreateBackupJob implements ShouldQueue
         // EncryptDataJob::dispatch($this->storedPath);
 
         $sdk = new Sdk([
-            'region' => Arr::get($this->vaultData, 1),
+            'region' => $this->vault->region,
         ]);
 
         $stsClient = $sdk->createSts();
@@ -65,7 +64,7 @@ class CreateBackupJob implements ShouldQueue
             new UploadRequest($absolutePath, [
                 'Bucket' => $this->vault->aws_bucket_name,
                 'Key' => $key, // the key is also with the folders, not only the filename
-                'StorageClass' => $this->meta['storage_class'],
+                'StorageClass' => $this->resolveStorageClass(),
                 'Tagging' => http_build_query([
                     'user_id' => Auth::id(),
                 ]
@@ -73,10 +72,8 @@ class CreateBackupJob implements ShouldQueue
             ])
         );
 
-        ray($this->meta['storage_class']);
-
         $storageClassId = StorageClass::query()
-            ->where('storage_class', $this->meta['storage_class'])
+            ->where('storage_class', $this->resolveStorageClass())
             ->firstOrFail()
             ->id;
 
@@ -101,5 +98,10 @@ class CreateBackupJob implements ShouldQueue
     public function generateBackupName(): string
     {
         return Str::uuid()->toString();
+    }
+
+    protected function resolveStorageClass(): string
+    {
+        return $this->meta['storage_class'] ?? 'STANDARD';
     }
 }

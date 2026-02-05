@@ -10,15 +10,25 @@ use App\Models\Vault;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class VaultController extends Controller
 {
     /**
      * Display a listing of the resource. This is for users of the application only
      */
-    public function index()
+    public function index(Request $request): Response
     {
-        $vaults = Vault::all();
+        $vaults = $request->user()
+            ?->vaults()
+            ->with('location')
+            ->get()
+            ->map(function (Vault $vault): array {
+                return [
+                    ...$vault->toArray(),
+                    'location' => $vault->location?->name,
+                ];
+            }) ?? collect();
         $locations = Location::query()
             ->where('active', true)
             ->orderBy('name')

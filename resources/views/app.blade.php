@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
     <script>
@@ -38,10 +39,16 @@
 
     @php
         $logo = config('app.logo') ?: 'logo.svg';
+        if (! str_starts_with($logo, 'http')) {
+            $publicPath = public_path(ltrim($logo, '/'));
+            if (! file_exists($publicPath)) {
+                $logo = 'logo.svg';
+            }
+        }
         $logoUrl = str_starts_with($logo, 'http') ? $logo : asset($logo);
     @endphp
-    <link rel="icon" href="{{ $logoUrl }}" sizes="any">
-    <link rel="icon" href="{{ $logoUrl }}" type="image/svg+xml">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.bunny.net">

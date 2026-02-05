@@ -27,7 +27,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const PAGE_SIZE = 50;
 
@@ -171,10 +171,68 @@ type Props = {
 export default function BackupsIndex({ vaults = [], folders = [], backups = [] }: Props) {
     const { tree, parentMap } = buildTree(vaults, folders, backups);
     const vaultById = new Map(vaults.map((vault) => [String(vault.id), vault]));
+    const [searchTerm, setSearchTerm] = useState('');
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    const { filteredTree, filteredParentMap } = useMemo(() => {
+        if (!normalizedSearch) {
+            return { filteredTree: tree, filteredParentMap: parentMap };
+        }
+
+        const matches = (value: string) => value.toLowerCase().includes(normalizedSearch);
+
+        const filterNode = (node: TreeNode): TreeNode | null => {
+            if (node.kind === 'backup') {
+                return matches(node.backup.name) ? node : null;
+            }
+
+            const children = node.children
+                .map((child) => filterNode(child))
+                .filter((child): child is TreeNode => Boolean(child));
+
+            if (node.kind === 'vault') {
+                if (matches(node.vault.name) || children.length > 0) {
+                    return { ...node, children };
+                }
+            }
+
+            if (node.kind === 'folder') {
+                if (matches(node.folder.name) || children.length > 0) {
+                    return { ...node, children };
+                }
+            }
+
+            return null;
+        };
+
+        const filteredTree = tree
+            .map((vaultNode) => filterNode(vaultNode))
+            .filter((vaultNode): vaultNode is TreeNode => Boolean(vaultNode));
+
+        const filteredParentMap = new Map<string, string | null>();
+        filteredTree.forEach((vaultNode) => {
+            const vaultKey = nodeKey(vaultNode);
+            filteredParentMap.set(vaultKey, null);
+            const walk = (node: TreeNode) => {
+                if (node.kind !== 'backup') {
+                    node.children.forEach((child) => {
+                        filteredParentMap.set(nodeKey(child), nodeKey(node));
+                        walk(child);
+                    });
+                }
+            };
+            walk(vaultNode);
+        });
+
+        return { filteredTree, filteredParentMap };
+    }, [normalizedSearch, tree, parentMap]);
+
+    const activeTree = normalizedSearch ? filteredTree : tree;
+    const activeParentMap = normalizedSearch ? filteredParentMap : parentMap;
     const rootNode: TreeNode = {
         kind: 'vault',
         vault: { id: 'all', name: 'All Vaults' },
-        children: tree,
+        children: activeTree,
     };
     const [selectedKey, setSelectedKey] = useState(nodeKey(rootNode));
     const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
@@ -186,7 +244,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
         let current: string | null | undefined = key;
         while (current) {
             next.add(current);
-            current = parentMap.get(current) ?? null;
+            current = activeParentMap.get(current) ?? null;
         }
         setExpandedKeys(next);
     };
@@ -200,6 +258,33 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
         }
         return null;
     };
+
+    useEffect(() => {
+        if (!normalizedSearch) {
+            return;
+        }
+
+        const nextExpanded = new Set<string>();
+        const walk = (node: TreeNode) => {
+            nextExpanded.add(nodeKey(node));
+            if (node.kind !== 'backup') {
+                node.children.forEach(walk);
+            }
+        };
+
+        walk(rootNode);
+        setExpandedKeys(nextExpanded);
+
+        const hasSelected = (node: TreeNode, key: string): boolean => {
+            if (nodeKey(node) === key) return true;
+            if (node.kind === 'backup') return false;
+            return node.children.some((child) => hasSelected(child, key));
+        };
+
+        if (!hasSelected(rootNode, selectedKey)) {
+            setSelectedKey(nodeKey(rootNode));
+        }
+    }, [normalizedSearch, rootNode, selectedKey]);
 
     const selectedNode = findNode(rootNode, selectedKey) ?? rootNode;
     const selectedChildren =
@@ -238,6 +323,8 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                             <Input
                                 placeholder="Search backups or folders..."
                                 className="pl-9"
+                                value={searchTerm}
+                                onChange={(event) => setSearchTerm(event.target.value)}
                             />
                         </div>
                         {/*

@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { toUrl } from '@/lib/utils';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { FileText, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -29,22 +29,33 @@ export default function UploadBackup() {
     const [storageClass, setStorageClass] = useState('');
     const [dataVault, setDataVault] = useState('');
     const [folder, setFolder] = useState('');
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
     const { data, setData, post, processing, reset } = useForm<{
-        files: File[];
         vault_id: string;
         folder_id: string | null;
         storage_class: string | null;
+        uploads: Array<{
+            path: string;
+            original_name: string;
+            size: number;
+            mime_type: string;
+        }>;
     }>({
-        files: [],
         vault_id: '',
         folder_id: null,
         storage_class: null,
+        uploads: [],
     });
 
-    const hasFiles = useMemo(() => data.files.length > 0, [data.files]);
+    const hasFiles = useMemo(() => selectedFiles.length > 0, [selectedFiles]);
     const canContinue = step === 1 ? hasFiles : Boolean(dataVault);
-    const totalBytes = useMemo(() => data.files.reduce((sum, file) => sum + file.size, 0), [data.files]);
+    const totalBytes = useMemo(
+        () => selectedFiles.reduce((sum, file) => sum + file.size, 0),
+        [selectedFiles],
+    );
     const totalGB = totalBytes / (1024 * 1024 * 1024);
     const formattedTotalGB = totalGB.toFixed(2);
     const formatCurrency = (value: number) =>
@@ -55,13 +66,13 @@ export default function UploadBackup() {
         }).format(value);
 
     const previews = useMemo(() => {
-        return data.files.map((file) => {
+        return selectedFiles.map((file) => {
             if (file.type.startsWith('image/')) {
                 return URL.createObjectURL(file);
             }
             return null;
         });
-    }, [data.files]);
+    }, [selectedFiles]);
 
     useEffect(() => {
         return () => {
@@ -73,22 +84,52 @@ export default function UploadBackup() {
         };
     }, [previews]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        if (isUploading) {
+            return;
+        }
+
         setData('vault_id', dataVault);
         setData('folder_id', folder || null);
         setData('storage_class', storageClass || null);
 
-        post(toUrl('/backups'), {
-            forceFormData: true,
-            preserveScroll: true,
-            onSuccess: () => {
-                reset();
-                setStorageClass('');
-                setDataVault('');
-                setFolder('');
-                setStep(1);
-            },
-        });
+        setIsUploading(true);
+        setProgress(0);
+
+        try {
+            const uploads = await uploadFilesInChunks(selectedFiles, dataVault, setProgress);
+            setData('uploads', uploads);
+
+            router.post(
+                toUrl('/backups'),
+                {
+                    vault_id: dataVault,
+                    folder_id: folder || null,
+                    storage_class: storageClass || null,
+                    uploads,
+                },
+                {
+                    preserveScroll: true,
+                    onFinish: () => {
+                        setIsUploading(false);
+                        setProgress(0);
+                    },
+                    onSuccess: () => {
+                        reset();
+                        setSelectedFiles([]);
+                        setStorageClass('');
+                        setDataVault('');
+                        setFolder('');
+                        setStep(1);
+                    },
+                },
+            );
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Upload failed';
+            alert(message);
+            setIsUploading(false);
+            setProgress(0);
+        }
     };
 
     return (
@@ -132,7 +173,9 @@ export default function UploadBackup() {
                                 <Button variant="outline" asChild>
                                     <label htmlFor="backup-files">Choose files</label>
                                 </Button>
-                                {hasFiles ? <span className="text-xs text-muted-foreground">{data.files.length} selected</span> : null}
+                                {hasFiles ? (
+                                    <span className="text-xs text-muted-foreground">{selectedFiles.length} selected</span>
+                                ) : null}
                                 <Input
                                     id="backup-files"
                                     type="file"
@@ -140,7 +183,7 @@ export default function UploadBackup() {
                                     className="sr-only"
                                     onChange={(event) => {
                                         const nextFiles = Array.from(event.target.files ?? []);
-                                        setData('files', [...data.files, ...nextFiles]);
+                                        setSelectedFiles((current) => [...current, ...nextFiles]);
                                         event.target.value = '';
                                     }}
                                 />
@@ -149,7 +192,7 @@ export default function UploadBackup() {
                         </div>
                         {hasFiles && (
                             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                {data.files.map((file, index) => (
+                                {selectedFiles.map((file, index) => (
                                     <div
                                         key={`${file.name}-${file.lastModified}`}
                                         className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3"
@@ -171,10 +214,7 @@ export default function UploadBackup() {
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => {
-                                                setData(
-                                                    'files',
-                                                    data.files.filter((_, fileIndex) => fileIndex !== index),
-                                                );
+                                                setSelectedFiles((current) => current.filter((_, fileIndex) => fileIndex !== index));
                                             }}
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -260,8 +300,22 @@ export default function UploadBackup() {
                             </div>
                         </div>
                         <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-                            Files selected: {data.files.length} · Total size: {formattedTotalGB} GB
+                            Files selected: {selectedFiles.length} · Total size: {formattedTotalGB} GB
                         </div>
+                        {isUploading && (
+                            <div className="mt-4 space-y-2">
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>Upload progress</span>
+                                    <span>{progress}%</span>
+                                </div>
+                                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                                    <div
+                                        className="h-full rounded-full bg-primary transition-[width] duration-300"
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -277,8 +331,8 @@ export default function UploadBackup() {
                         </Button>
                     )}
                     {step === 2 && (
-                        <Button disabled={!canContinue || processing} onClick={handleSubmit}>
-                            Upload backup
+                        <Button disabled={!canContinue || processing || isUploading} onClick={handleSubmit}>
+                            {isUploading ? 'Uploading...' : 'Upload backup'}
                         </Button>
                     )}
                 </div>
@@ -340,4 +394,80 @@ export default function UploadBackup() {
             </div>
         </AppLayout>
     );
+}
+
+async function uploadFilesInChunks(
+    files: File[],
+    vaultId: string,
+    onProgress: (value: number) => void,
+): Promise<Array<{ path: string; original_name: string; size: number; mime_type: string }>> {
+    const chunkSize = 5 * 1024 * 1024;
+    const totalChunks = files.reduce((sum, file) => sum + Math.ceil(file.size / chunkSize), 0);
+    const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content;
+
+    if (!csrfToken) {
+        throw new Error('Missing CSRF token');
+    }
+
+    let completedChunks = 0;
+    const uploads = [];
+
+    for (const file of files) {
+        const fileChunks = Math.ceil(file.size / chunkSize);
+        const uploadId = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+
+        for (let chunkIndex = 0; chunkIndex < fileChunks; chunkIndex += 1) {
+            const start = chunkIndex * chunkSize;
+            const end = Math.min(start + chunkSize, file.size);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('file', chunk);
+            formData.append('chunkIndex', String(chunkIndex));
+            formData.append('totalChunks', String(fileChunks));
+            formData.append('uploadId', uploadId);
+            formData.append('originalName', file.name);
+            formData.append('vault_id', vaultId);
+
+            const response = await fetch(toUrl('/backups/chunked-upload'), {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    Accept: 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Chunk upload failed');
+            }
+
+            completedChunks += 1;
+            onProgress(Math.round((completedChunks / totalChunks) * 100));
+        }
+
+        const finalizeResponse = await fetch(toUrl('/backups/finalize-upload'), {
+            method: 'POST',
+            body: JSON.stringify({
+                uploadId,
+                fileName: file.name,
+                vault_id: vaultId,
+            }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                Accept: 'application/json',
+            },
+        });
+
+        if (!finalizeResponse.ok) {
+            const error = await finalizeResponse.json();
+            throw new Error(error.message || 'Finalization failed');
+        }
+
+        uploads.push(await finalizeResponse.json());
+    }
+
+    return uploads;
 }

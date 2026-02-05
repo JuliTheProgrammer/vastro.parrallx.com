@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Audit\AuditController;
 use App\Http\Controllers\Backup\BackupController;
+use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\Folder\FolderController;
 use App\Http\Controllers\Link\LinkCotroller;
 use App\Http\Controllers\Vault\VaultController;
@@ -29,6 +30,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('backups/upload', [BackupController::class, 'create'])->name('backups.upload');
     Route::post('backups', [BackupController::class, 'store'])->name('backups.store');
+    Route::post('backups/chunked-upload', [BackupController::class, 'uploadChunk'])->name('backups.chunked');
+    Route::post('backups/finalize-upload', [BackupController::class, 'finalizeUpload'])->name('backups.finalize');
     Route::get('backups/{id}', [BackupController::class, 'show'])->name('backups.show');
 
     Route::get('links', [LinkCotroller::class, 'index'])->name('links.index');
@@ -38,6 +41,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('backups/versions', function () {
         return Inertia::render('backups/versions');
     })->name('backups.versions');
+
+    Route::get('fileupload', [FileUploadController::class, 'index'])->name('fileupload.index');
+    Route::post('fileupload', [FileUploadController::class, 'store'])->name('fileupload.store');
+    Route::post('fileupload/chunked-upload', [FileUploadController::class, 'uploadChunk'])->name('fileupload.chunked');
+    Route::post('fileupload/finalize-upload', [FileUploadController::class, 'finalizeUpload'])->name('fileupload.finalize');
 
     Route::resource('vaults', VaultController::class);
 

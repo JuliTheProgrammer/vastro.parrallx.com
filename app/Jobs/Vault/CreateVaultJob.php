@@ -34,6 +34,8 @@ class CreateVaultJob implements ShouldQueue
      */
     public function handle(): void
     {
+
+        ray($this->vaultData);
         $sdk = new Sdk([
             'region' => Arr::get($this->vaultData, 1),
         ]);
