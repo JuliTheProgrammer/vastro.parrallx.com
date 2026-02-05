@@ -11,7 +11,6 @@ use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class CreateVaultJob implements ShouldQueue
@@ -60,7 +59,7 @@ class CreateVaultJob implements ShouldQueue
         activity('Request POST')
             ->log('request to create bucket');
 
-        $bucketName = $this->generateBucketName(Arr::get($this->vaultData, 0));
+        $bucketName = $this->generateBucketName();
 
         $bucket = $s3Client->createBucket([
             'Bucket' => $bucketName,
@@ -92,7 +91,7 @@ class CreateVaultJob implements ShouldQueue
         ray($location);
 
         Vault::create([
-            'user_id' => Auth::id(), // Later change to the current Auth user
+            'user_id' => Arr::get($this->vaultData, 4),
             'name' => Arr::get($this->vaultData, 0),
             'aws_bucket_name' => $bucketName,
             'aws_bucket_arn' => Arr::get($bucket, 'BucketArn'),
@@ -103,10 +102,9 @@ class CreateVaultJob implements ShouldQueue
 
     }
 
-    public function generateBucketName($vaultName): string
+    public function generateBucketName(): string
     {
-        // the uuid should be the uuid from the Auth user
-        $user = Auth::user()->id;
+        $user = Arr::get($this->vaultData, 4);
 
         $uuid = Str::uuid()->toString();
 

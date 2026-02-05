@@ -8,10 +8,10 @@ use App\Models\User;
 
 class VaultAction
 {
-    public function createVault($vaultName, $vaultLocation, $wormProtection, $deleteProtection)
+    public function createVault($vaultName, $vaultLocation, $wormProtection, $deleteProtection, $userId)
     {
         ray('Action Called');
-        $data = [$vaultName, $vaultLocation, $wormProtection, $deleteProtection];
+        $data = [$vaultName, $vaultLocation, $wormProtection, $deleteProtection, $userId];
         if (app()->environment('local')) {
             CreateVaultJob::dispatchSync($data);
 

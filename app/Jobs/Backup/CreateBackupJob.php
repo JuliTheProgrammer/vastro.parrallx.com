@@ -4,6 +4,7 @@ namespace App\Jobs\Backup;
 
 use App\Jobs\KMS\EncryptDataJob;
 use App\Models\Backup;
+use App\Models\Location;
 use App\Models\StorageClass;
 use App\Models\Vault;
 use Aws\S3\S3Client;
@@ -33,8 +34,9 @@ class CreateBackupJob implements ShouldQueue
 
         // EncryptDataJob::dispatch($this->storedPath);
 
+        $region = $this->resolveRegion();
         $sdk = new Sdk([
-            'region' => $this->vault->region,
+            'region' => $region,
         ]);
 
         $stsClient = $sdk->createSts();
@@ -47,7 +49,7 @@ class CreateBackupJob implements ShouldQueue
 
         $s3Client = new S3Client([
             'version' => 'latest',
-            'region' => $this->vault->region,
+            'region' => $region,
             'credentials' => [
                 'key' => $result['Credentials']['AccessKeyId'],
                 'secret' => $result['Credentials']['SecretAccessKey'],
@@ -103,5 +105,17 @@ class CreateBackupJob implements ShouldQueue
     protected function resolveStorageClass(): string
     {
         return $this->meta['storage_class'] ?? 'STANDARD';
+    }
+
+    protected function resolveRegion(): string
+    {
+        if ($this->vault->location_id) {
+            $location = Location::find($this->vault->location_id);
+            if ($location?->code) {
+                return $location->code;
+            }
+        }
+
+        return config('filesystems.disks.s3.region');
     }
 }

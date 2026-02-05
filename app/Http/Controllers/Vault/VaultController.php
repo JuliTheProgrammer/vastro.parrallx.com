@@ -72,7 +72,13 @@ class VaultController extends Controller
         $encryption = Arr::get($vaultData, 'encryption');
         $deleteProtection = Arr::get($vaultData, 'deleteProtection');
 
-        app(VaultAction::class)->createVault($vaultName, $vaultLocation, $wormProtection, $deleteProtection);
+        app(VaultAction::class)->createVault(
+            $vaultName,
+            $vaultLocation,
+            $wormProtection,
+            $deleteProtection,
+            $request->user()?->id
+        );
 
         return redirect()
             ->route('vaults.index')
