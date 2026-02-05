@@ -57,7 +57,7 @@ class CreateBackupJob implements ShouldQueue
         ]);
 
         $transferManager = new S3TransferManager($s3Client);
-        $absolutePath = $this->storedPath;
+        $absolutePath = Storage::path($this->storedPath);
         $key = $this->generateBackupName();
 
         // also put tags onto the object
