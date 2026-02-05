@@ -17,6 +17,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -61,16 +62,31 @@ class CreateBackupJob implements ShouldQueue
         $key = $this->generateBackupName();
 
         // also put tags onto the object
-        $uploadPromise = $transferManager->upload(
-            new UploadRequest($absolutePath, [
-                'Bucket' => $this->vault->aws_bucket_name,
-                'Key' => $key, // the key is also with the folders, not only the filename
-                'StorageClass' => $this->resolveStorageClass(),
-                'Tagging' => http_build_query([
-                    'user_id' => $this->resolveUserId(),
-                ]),
-            ])
-        );
+        try {
+            $uploadPromise = $transferManager->upload(
+                new UploadRequest($absolutePath, [
+                    'Bucket' => $this->vault->aws_bucket_name,
+                    'Key' => $key, // the key is also with the folders, not only the filename
+                    'StorageClass' => $this->resolveStorageClass(),
+                    'Tagging' => http_build_query([
+                        'user_id' => $this->resolveUserId(),
+                    ]),
+                ])
+            );
+
+            $uploadPromise->wait();
+        } catch (\Throwable $exception) {
+            Log::error('Backup upload failed', [
+                'vault_id' => $this->vault->id,
+                'bucket' => $this->vault->aws_bucket_name,
+                'path' => $this->storedPath,
+                'region' => $region,
+                'storage_class' => $this->resolveStorageClass(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            throw $exception;
+        }
 
         $storageClassId = StorageClass::query()
             ->where('storage_class', $this->resolveStorageClass())
