@@ -17,7 +17,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -68,9 +67,8 @@ class CreateBackupJob implements ShouldQueue
                 'Key' => $key, // the key is also with the folders, not only the filename
                 'StorageClass' => $this->resolveStorageClass(),
                 'Tagging' => http_build_query([
-                    'user_id' => Auth::id(),
-                ]
-                ),
+                    'user_id' => $this->resolveUserId(),
+                ]),
             ])
         );
 
@@ -86,7 +84,7 @@ class CreateBackupJob implements ShouldQueue
         Backup::create([
             'backupable_id' => $this->vault->id,
             'backupable_type' => get_class($this->vault),
-            'user_id' => Auth::user()->id, // later change this dynamically
+            'user_id' => $this->resolveUserId(),
             'name' => $this->meta['original_name'] ?? 'backup',
             'path' => $key,
             'size_megaBytes' => $this->meta['size'] ?? null,
@@ -117,5 +115,10 @@ class CreateBackupJob implements ShouldQueue
         }
 
         return config('filesystems.disks.s3.region');
+    }
+
+    protected function resolveUserId(): int
+    {
+        return (int) ($this->meta['user_id'] ?? $this->vault->user_id);
     }
 }
