@@ -57,9 +57,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('duplications/index');
     })->name('duplications.index');
 
-    // Route::get('support', function () {
-    //     return Inertia::render('support/index');
-    // })->name('support.index');
+    Route::get('support/starting-guide', function () {
+        return Inertia::render('support/starting-guide');
+    })->name('support.starting-guide');
 
     Route::get('feedback', function () {
         return Inertia::render('feedback/index');

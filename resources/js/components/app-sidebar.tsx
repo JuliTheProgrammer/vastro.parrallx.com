@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Archive, Folder, MessageCircle, UploadCloud } from 'lucide-react';
+import { Archive, Folder, LifeBuoy, MessageCircle, UploadCloud } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const backupNavItems: NavItem[] = [
@@ -63,11 +63,11 @@ const accountNavItems: NavItem[] = [
 ];*/
 
 const helpNavItems: NavItem[] = [
-    // {
-    //     title: 'Support',
-    //     href: '/support',
-    //     icon: LifeBuoy,
-    // },
+    {
+        title: 'Starting guide',
+        href: '/support/starting-guide',
+        icon: LifeBuoy,
+    },
     {
         title: 'Feedback',
         href: '/feedback',
