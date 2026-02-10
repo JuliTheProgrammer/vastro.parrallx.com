@@ -61,7 +61,12 @@ class BackupPolicy
     public function delete(User $user, Backup $backup): bool
     {
         // check wether vault has WORM protection enabled
+        if ($backup->vault->delete_protection) {
+
+        }
+
         return ! $backup->vault->delete_protection;
+        // make sure to throw an exception -> will come to flare
     }
 
     /**

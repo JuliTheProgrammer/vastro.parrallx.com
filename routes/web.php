@@ -32,7 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('backups', [BackupController::class, 'store'])->name('backups.store');
     Route::post('backups/chunked-upload', [BackupController::class, 'uploadChunk'])->name('backups.chunked');
     Route::post('backups/finalize-upload', [BackupController::class, 'finalizeUpload'])->name('backups.finalize');
-    Route::get('backups/{id}', [BackupController::class, 'show'])->name('backups.show');
+    Route::get('backups/{uuid}', [BackupController::class, 'show'])->name('backups.show');
+    Route::get('backups/delete/{uuid}', [BackupController::class, 'destroy'])->name('backups.delete');
 
     Route::get('links', [LinkCotroller::class, 'index'])->name('links.index');
     Route::get('backups/share', function () {

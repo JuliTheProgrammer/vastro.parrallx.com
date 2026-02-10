@@ -3,6 +3,7 @@
 namespace App\Jobs\Backup;
 
 use App\Models\Backup;
+use App\Models\Link;
 use App\Models\Location;
 use App\Models\Vault;
 use Aws\S3\S3Client;
@@ -13,10 +14,13 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 use function DI\string;
 
 // Will get called from a controller -> route
+
+// CURRENTY NOT USED -> ACTION
 class GetPresignedURLJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -53,24 +57,24 @@ class GetPresignedURLJob implements ShouldQueue
 
         ray($this->vault);
 
-        $sdk = new Sdk([
-            'region' => Arr::get($this->vaultData, 1),
-        ]);
-
-        $stsClient = $sdk->createSts();
+        //        $sdk = new Sdk([
+        //            'region' => Arr::get($this->vaultData, 1),
+        //        ]);
+        //
+        //        $stsClient = $sdk->createSts();
 
         // assume role
-
-        $result = $stsClient->getSessionToken();
+        //
+        //        $result = $stsClient->getSessionToken();
 
         $s3Client = new S3Client([
             'version' => 'latest',
             'region' => $this->region,
-            'credentials' => [
-                'key' => $result['Credentials']['AccessKeyId'],
-                'secret' => $result['Credentials']['SecretAccessKey'],
-                'token' => $result['Credentials']['SessionToken'],
-            ],
+            //            'credentials' => [
+            //                'key' => $result['Credentials']['AccessKeyId'],
+            //                'secret' => $result['Credentials']['SecretAccessKey'],
+            //                'token' => $result['Credentials']['SessionToken'],
+            //            ],
         ]);
 
         $request = $s3Client->createPresignedRequest(
@@ -83,6 +87,14 @@ class GetPresignedURLJob implements ShouldQueue
 
         ray(string($request->getUri()));
 
-        return (string) $request->getUri();
+        // Create a Link
+
+        Link::create([
+            'user_id' => $this->vault->user_id,
+            'linkable_type' => Backup::class,
+            'linkable_id' => $backup->id,
+            'name' => Str::uuid()->toString(),
+            'expires_at' => now()->addHour(),
+        ]);
     }
 }

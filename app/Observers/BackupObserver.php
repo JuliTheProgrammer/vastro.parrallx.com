@@ -40,12 +40,12 @@ class BackupObserver
      */
     public function deleted(Backup $backup): void
     {
-        $user = Auth::user();
-        $user->userStatistics()->total_stored_megaBytes -= $backup->size;
-
-        $user->userStatistics()->backup_count--;
-
-        $user->userStatistics()->save();
+        //        $user = Auth::user();
+        //        $user->userStatistics()->total_stored_megaBytes -= $backup->size;
+        //
+        //        $user->userStatistics()->backup_count--;
+        //
+        //        $user->userStatistics()->save();
     }
 
     /**

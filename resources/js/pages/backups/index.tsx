@@ -1,32 +1,11 @@
-import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
-import {
-    ChevronRight,
-    Folder as FolderIcon,
-    MoreHorizontal,
-    FileText,
-    Image as ImageIcon,
-    Lock,
-    Search,
-    Video,
-} from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AppLayout from '@/layouts/app-layout';
+import { Head } from '@inertiajs/react';
+import { ChevronRight, FileText, Folder as FolderIcon, Image as ImageIcon, Lock, MoreHorizontal, Search, Video } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const PAGE_SIZE = 50;
@@ -46,6 +25,7 @@ type Folder = {
 type Backup = {
     mime_type_readable: string;
     id: number | string;
+    uuid: string;
     name: string;
     mime_type?: string | null;
     created_at?: string | null;
@@ -186,9 +166,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                 return matches(node.backup.name) ? node : null;
             }
 
-            const children = node.children
-                .map((child) => filterNode(child))
-                .filter((child): child is TreeNode => Boolean(child));
+            const children = node.children.map((child) => filterNode(child)).filter((child): child is TreeNode => Boolean(child));
 
             if (node.kind === 'vault') {
                 if (matches(node.vault.name) || children.length > 0) {
@@ -205,9 +183,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
             return null;
         };
 
-        const filteredTree = tree
-            .map((vaultNode) => filterNode(vaultNode))
-            .filter((vaultNode): vaultNode is TreeNode => Boolean(vaultNode));
+        const filteredTree = tree.map((vaultNode) => filterNode(vaultNode)).filter((vaultNode): vaultNode is TreeNode => Boolean(vaultNode));
 
         const filteredParentMap = new Map<string, string | null>();
         filteredTree.forEach((vaultNode) => {
@@ -235,9 +211,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
         children: activeTree,
     };
     const [selectedKey, setSelectedKey] = useState(nodeKey(rootNode));
-    const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
-        () => new Set([nodeKey(rootNode)]),
-    );
+    const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => new Set([nodeKey(rootNode)]));
 
     const expandPath = (key: string) => {
         const next = new Set(expandedKeys);
@@ -287,10 +261,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
     }, [normalizedSearch, rootNode, selectedKey]);
 
     const selectedNode = findNode(rootNode, selectedKey) ?? rootNode;
-    const selectedChildren =
-        selectedNode.kind === 'backup'
-            ? []
-            : selectedNode.children.filter((child) => child.kind !== 'folder');
+    const selectedChildren = selectedNode.kind === 'backup' ? [] : selectedNode.children.filter((child) => child.kind !== 'folder');
 
     return (
         <AppLayout
@@ -305,21 +276,15 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
             <div className="flex min-h-0 flex-1 flex-col gap-6 p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground">
-                            All Vaults
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Review recent backups and manage exports.
-                        </p>
+                        <h1 className="text-lg font-semibold text-foreground">All Vaults</h1>
+                        <p className="text-sm text-muted-foreground">Review recent backups and manage exports.</p>
                         <div className="mt-3 text-xs text-muted-foreground">
-                            <Breadcrumbs
-                                breadcrumbs={[{ title: 'All Vaults', href: '/backups' }]}
-                            />
+                            <Breadcrumbs breadcrumbs={[{ title: 'All Vaults', href: '/backups' }]} />
                         </div>
                     </div>
                     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                         <div className="relative w-full sm:w-72">
-                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 placeholder="Search backups or folders..."
                                 className="pl-9"
@@ -335,48 +300,27 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                             Create folder
                         </Button>
                         */}
-                        </div>
+                    </div>
                 </div>
 
                 <div className="flex min-h-[calc(100vh-220px)] flex-1 flex-col rounded-xl border border-border bg-card">
                     <div className="flex-1 overflow-auto">
                         <div className="border-b border-border px-4 py-3 text-xs text-muted-foreground">
-                            <Breadcrumbs
-                                breadcrumbs={[{ title: 'All Vaults', href: '/backups' }]}
-                            />
+                            <Breadcrumbs breadcrumbs={[{ title: 'All Vaults', href: '/backups' }]} />
                         </div>
                         <div className="grid gap-0 border-b border-border lg:grid-cols-[280px_1fr]">
-                            <div className="border-b border-border p-3 lg:border-b-0 lg:border-r">
-                                <div className="text-xs font-medium text-muted-foreground">
-                                    Locations
-                                </div>
+                            <div className="border-b border-border p-3 lg:border-r lg:border-b-0">
+                                <div className="text-xs font-medium text-muted-foreground">Locations</div>
                                 <div className="mt-3 space-y-1">
                                     {(() => {
-                                        const renderTree = (
-                                            node: TreeNode,
-                                            depth = 0,
-                                        ): JSX.Element => {
-                                            const isSelected =
-                                                selectedKey === nodeKey(node);
-                                            const label =
-                                                node.kind === 'vault'
-                                                    ? node.vault.name
-                                                    : node.backup.name;
-                                            const children =
-                                                node.kind === 'backup'
-                                                    ? []
-                                                    : node.children.filter(
-                                                          (child) =>
-                                                              child.kind ===
-                                                              'vault',
-                                                      );
+                                        const renderTree = (node: TreeNode, depth = 0): JSX.Element => {
+                                            const isSelected = selectedKey === nodeKey(node);
+                                            const label = node.kind === 'vault' ? node.vault.name : node.backup.name;
+                                            const children = node.kind === 'backup' ? [] : node.children.filter((child) => child.kind === 'vault');
                                             const hasChildren = children.length > 0;
-                                            const isExpanded =
-                                                expandedKeys.has(nodeKey(node));
+                                            const isExpanded = expandedKeys.has(nodeKey(node));
                                             return (
-                                                <div
-                                                    key={`${node.kind}-${label}-${depth}`}
-                                                >
+                                                <div key={`${node.kind}-${label}-${depth}`}>
                                                     <button
                                                         type="button"
                                                         onClick={() => {
@@ -385,9 +329,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                             expandPath(key);
                                                         }}
                                                         className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition ${
-                                                            isSelected
-                                                                ? 'bg-primary/10 text-primary'
-                                                                : 'text-foreground hover:bg-muted/60'
+                                                            isSelected ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted/60'
                                                         }`}
                                                         style={{
                                                             paddingLeft: `${depth * 12 + 8}px`,
@@ -395,9 +337,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                     >
                                                         <span
                                                             className={`flex h-4 w-4 items-center justify-center text-muted-foreground ${
-                                                                hasChildren
-                                                                    ? ''
-                                                                    : 'opacity-0'
+                                                                hasChildren ? '' : 'opacity-0'
                                                             }`}
                                                         >
                                                             <button
@@ -417,28 +357,13 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                                 }}
                                                                 className="rounded-sm p-0.5 hover:bg-muted"
                                                             >
-                                                                <ChevronRight
-                                                                    className={`h-3 w-3 transition ${
-                                                                        isExpanded
-                                                                            ? 'rotate-90'
-                                                                            : ''
-                                                                    }`}
-                                                                />
+                                                                <ChevronRight className={`h-3 w-3 transition ${isExpanded ? 'rotate-90' : ''}`} />
                                                             </button>
                                                         </span>
                                                         <FolderIcon className="h-4 w-4 text-muted-foreground" />
-                                                        <span className="truncate">
-                                                            {label}
-                                                        </span>
+                                                        <span className="truncate">{label}</span>
                                                     </button>
-                                                    {isExpanded
-                                                        ? children.map((child) =>
-                                                              renderTree(
-                                                                  child,
-                                                                  depth + 1,
-                                                              ),
-                                                          )
-                                                        : null}
+                                                    {isExpanded ? children.map((child) => renderTree(child, depth + 1)) : null}
                                                 </div>
                                             );
                                         };
@@ -455,16 +380,13 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                             <TableHead>Preview</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Created</TableHead>
-                                            <TableHead className="text-right">
-                                                More
-                                            </TableHead>
+                                            <TableHead className="text-right">More</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {selectedChildren.map((child) => {
                                             if (child.kind === 'vault') {
-                                                const label =
-                                                    child.vault.name;
+                                                const label = child.vault.name;
                                                 return (
                                                     <TableRow
                                                         key={`${child.kind}-${label}`}
@@ -480,18 +402,10 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                                 <span>{label}</span>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="text-sm text-muted-foreground">
-                                                            Vault
-                                                        </TableCell>
-                                                        <TableCell className="text-sm text-muted-foreground">
-                                                            —
-                                                        </TableCell>
-                                                        <TableCell className="text-sm text-muted-foreground">
-                                                            —
-                                                        </TableCell>
-                                                        <TableCell className="text-right text-sm text-muted-foreground">
-                                                            Open
-                                                        </TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">Vault</TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">—</TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">—</TableCell>
+                                                        <TableCell className="text-right text-sm text-muted-foreground">Open</TableCell>
                                                     </TableRow>
                                                 );
                                             }
@@ -539,10 +453,17 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                             <DropdownMenuContent align="end">
                                                                 <DropdownMenuItem
                                                                     onSelect={() => {
-                                                                        window.location.href = `/backups/${child.backup.id}`;
+                                                                        window.location.href = `/backups/${child.backup.uuid}`;
                                                                     }}
                                                                 >
                                                                     View backup
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onSelect={() => {
+                                                                        window.location.href = `/backups/delete/${child.backup.uuid}`;
+                                                                    }}
+                                                                >
+                                                                    Remove backup
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
@@ -557,22 +478,13 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                     </div>
                     <div className="flex flex-col items-start gap-3 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-xs text-muted-foreground">
-                            Showing {Math.min(PAGE_SIZE, backups.length)} of {backups.length}{' '}
-                            backups
+                            Showing {Math.min(PAGE_SIZE, backups.length)} of {backups.length} backups
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={backups.length <= PAGE_SIZE}
-                            >
+                            <Button variant="outline" size="sm" disabled={backups.length <= PAGE_SIZE}>
                                 Previous
                             </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={backups.length <= PAGE_SIZE}
-                            >
+                            <Button variant="outline" size="sm" disabled={backups.length <= PAGE_SIZE}>
                                 Next
                             </Button>
                         </div>

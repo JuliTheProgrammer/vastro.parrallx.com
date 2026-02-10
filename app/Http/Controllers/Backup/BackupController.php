@@ -3,20 +3,24 @@
 namespace App\Http\Controllers\Backup;
 
 use App\Actions\BackupActions;
+use App\Actions\LinkAction;
+use App\Exceptions\BackupHasWORMProtectionException;
+use App\Exceptions\InvalidUserShowBackup;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Backup\BackupRequest;
 use App\Http\Requests\Backup\FinalizeUploadRequest;
 use App\Http\Requests\Backup\UploadChunkRequest;
-use App\Jobs\Backup\GetPresignedURLJob;
 use App\Models\Backup;
 use App\Models\Folder;
 use App\Models\StorageClass;
 use App\Models\Vault;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class BackupController extends Controller
 {
@@ -91,13 +95,17 @@ class BackupController extends Controller
 
     /**
      * Display the specified resource.
+     *
+     * @throws Throwable
      */
-    public function show($id): void
+    public function show($uuid)
     {
-        ray('Controller Backup show reached');
-        $backup = Backup::where('id', $id)->firstOrFail();
-        ray($backup);
-        dispatch(new GetPresignedURLJob($backup->id));
+        $backup = Backup::where('uuid', $uuid)->firstOrFail();
+        $link = app(LinkAction::class)->createLinkForBackup($backup);
+        // check if user is logged in otherwise throw exception
+        throw_if(! Auth::user(), InvalidUserShowBackup::class); // this can only be done later withing the logic in our applicaiton
+
+        return redirect($link);
     }
 
     /**
@@ -119,9 +127,25 @@ class BackupController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Backup $backup): void
+    public function destroy(string $uuid)
     {
-        //
+        $backup = Backup::where('uuid', $uuid)->firstOrFail();
+
+        ray($backup->backupable_type);
+
+        $vaultId = $backup->backupable_id;
+
+        $vault = Vault::find($vaultId);
+
+        ray($vault);
+
+        throw_if($vault->worm_protection, BackupHasWORMProtectionException::class); // move to policy
+        // delete it locally in the database
+        app(BackupActions::class)->deleteBackup($backup);
+        // delete the backup in AWS
+        Backup::destroy($backup->id);
+
+        return redirect(route('backups.index'))->with('success', 'Backup deleted.');
     }
 
     public function uploadChunk(UploadChunkRequest $request): JsonResponse
