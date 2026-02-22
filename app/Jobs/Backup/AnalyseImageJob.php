@@ -6,11 +6,13 @@ use App\Models\Backup;
 use App\Models\BackupAnalysis;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Str;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Schema\ArraySchema;
 use Prism\Prism\Schema\ObjectSchema;
 use Prism\Prism\Schema\StringSchema;
+use Prism\Prism\ValueObjects\Media\Document;
 use Prism\Prism\ValueObjects\Media\Image;
 
 class AnalyseImageJob implements ShouldQueue
@@ -30,6 +32,41 @@ class AnalyseImageJob implements ShouldQueue
      * Execute the job.
      */
     public function handle(): void
+    {
+
+        $mimeType = Str::afterLast($this->storedPath, '.');
+
+        ray($mimeType);
+
+        match ($mimeType) {
+            'png', 'jpg', 'jpeg' => $response = $this->handleImage(),
+            'mp4' => $response = $this->handleVideo(),
+            'pdf' => $response = $this->handleDocument(),
+            default => $response = null
+        };
+
+        if (! $response) {
+            return;
+        }
+
+        $backup = Backup::findOrFail($this->backupId);
+
+        $analysis = BackupAnalysis::create([
+            'description' => $response->structured['description'] ?? null,
+            'tags' => $response->structured['tags'] ?? [],
+        ]);
+
+        $backup['backup_analysis_id'] = $analysis;
+
+        ray($backup);
+
+        ray($response);
+
+        // Storage::delete($this->storedPath);
+    }
+
+    // Return the response
+    private function handleImage()
     {
         $schema = new ObjectSchema(
             name: 'image_tags',
@@ -52,19 +89,34 @@ class AnalyseImageJob implements ShouldQueue
             ->withSchema($schema)
             ->asStructured();
 
-        $backup = Backup::findOrFail($this->backupId);
-
-        $analysis = BackupAnalysis::create([
-            'description' => $response->structured['description'] ?? null,
-            'tags' => $response->structured['tags'] ?? [],
-        ]);
-
-        $backup['backup_analysis_id'] = $analysis;
-
-        ray($backup);
-
-        ray($response);
-
-        // Storage::delete($this->storedPath);
+        return $response;
     }
+
+    public function handleDocument()
+    {
+        $schema = new ObjectSchema(
+            name: 'document_summary',
+            description: 'A structured document summary',
+            properties: [
+                new StringSchema('summary', 'A summary of the document'),
+                new StringSchema('language_percentage', 'What is the language percentage of the document'),
+                new ArraySchema(
+                    'tags',
+                    'The tags to describe the documents',
+                    new StringSchema('tag', 'A tag to describe the document'),
+                ),
+            ],
+            requiredFields: ['summary']
+        );
+
+        $response = Prism::structured()
+            ->using(Provider::Anthropic, 'claude-opus-4-6')
+            ->withSchema($schema)
+            ->withPrompt('Summarize this document, add tags to describe it and find out the language of the document and how confident you are', [Document::fromStoragePath($this->storedPath)])
+            ->asStructured();
+
+        return $response;
+    }
+
+    private function handleVideo() {}
 }

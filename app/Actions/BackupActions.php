@@ -11,11 +11,11 @@ use Aws\S3\S3Client;
 
 class BackupActions
 {
-    public function uploadBackup(string $storedPath, Vault $vault, array $meta): void
+    public function uploadBackup(string $storedPath, Vault $vault, array $meta, bool $aiAnalyses): void
     {
         if (app()->environment('local')) {
             ray('Backup Acion');
-            CreateBackupJob::dispatchSync($storedPath, $vault, $meta);
+            CreateBackupJob::dispatchSync($storedPath, $vault, $meta, $aiAnalyses);
 
             return;
         }

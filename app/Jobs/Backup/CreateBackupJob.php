@@ -26,7 +26,7 @@ class CreateBackupJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     // get the file content from the request
-    public function __construct(protected string $storedPath, protected Vault $vault, protected array $meta) {}
+    public function __construct(protected string $storedPath, protected Vault $vault, protected array $meta, private bool $aiAnalyses) {}
 
     public function handle(): void
     {
@@ -113,7 +113,11 @@ class CreateBackupJob implements ShouldQueue
             return;
         }
 
-        AnalyseImageJob::dispatch($this->storedPath, $backup->id);
+        ray($this->aiAnalyses);
+
+        if ($this->aiAnalyses) {
+            AnalyseImageJob::dispatch($this->storedPath, $backup->id);
+        }
 
         // delete backup was moved after image anaalysis
     }

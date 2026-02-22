@@ -61,6 +61,11 @@ class BackupController extends Controller
     {
         $validated = $request->validated();
 
+        // $aiAnalyses = $validated['analyses'];
+
+        // temp, change later in fronend ui
+        $aiAnalyses = true;
+
         $vault = Vault::findOrFail($validated['vault_id']);
         $storageClass = $validated['storage_class'] ?? 'STANDARD';
 
@@ -73,7 +78,7 @@ class BackupController extends Controller
                     'mime_type' => $file->getClientMimeType(),
                     'storage_class' => $storageClass,
                 ];
-                app(BackupActions::class)->uploadBackup($storedPath, $vault, $meta);
+                app(BackupActions::class)->uploadBackup($storedPath, $vault, $meta, $aiAnalyses);
             }
         } else {
             foreach ($validated['uploads'] as $upload) {
@@ -84,7 +89,7 @@ class BackupController extends Controller
                     'storage_class' => $storageClass,
                 ];
 
-                app(BackupActions::class)->uploadBackup($upload['path'], $vault, $meta);
+                app(BackupActions::class)->uploadBackup($upload['path'], $vault, $meta, $aiAnalyses);
             }
         }
 
