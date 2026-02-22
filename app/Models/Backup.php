@@ -48,6 +48,11 @@ class Backup extends Model
         return $this->hasOne(StorageClass::class);
     }
 
+    public function backupAnalysis(): HasOne
+    {
+        return $this->hasOne(BackupAnalysis::class);
+    }
+
     public function getTemporarySignedUrlAtribute(): string
     {
         return app(LinkAction::class)->createLinkForBackup($this);

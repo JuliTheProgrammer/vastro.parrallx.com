@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\BackupAnalysis;
 use App\Models\StorageClass;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
@@ -18,6 +19,7 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->foreignIdFor(StorageClass::class)->constrained()->restrictOnDelete();
             $table->foreignIdFor(User::class)->constrained()->restrictOnDelete();
+            $table->foreignIdFor(BackupAnalysis::class)->nullable()->constrained()->restrictOnDelete();
             $table->morphs('backupable');
             $table->string('name');
             $table->string('path')->unique();
