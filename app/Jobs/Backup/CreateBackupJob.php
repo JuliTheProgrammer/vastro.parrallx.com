@@ -96,8 +96,7 @@ class CreateBackupJob implements ShouldQueue
         ray($storageClassId);
 
         // define the storage class, if user did select one, if not take the one from the folder
-
-        Backup::create([
+        $backup = Backup::create([
             'backupable_id' => $this->vault->id,
             'backupable_type' => get_class($this->vault),
             'user_id' => $this->resolveUserId(),
@@ -108,7 +107,15 @@ class CreateBackupJob implements ShouldQueue
             'storage_class_id' => $storageClassId,
         ]);
 
-        Storage::delete($this->storedPath);
+        if (app()->environment('local')) {
+            AnalyseImageJob::dispatchSync($this->storedPath, $backup->id);
+
+            return;
+        }
+
+        AnalyseImageJob::dispatch($this->storedPath, $backup->id);
+
+        // delete backup was moved after image anaalysis
     }
 
     public function generateBackupName(): string

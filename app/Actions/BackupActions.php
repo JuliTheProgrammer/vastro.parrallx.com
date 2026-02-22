@@ -2,7 +2,6 @@
 
 namespace App\Actions;
 
-use App\Jobs\Backup\AnalyseImageJob;
 use App\Jobs\Backup\CreateBackupJob;
 use App\Models\Backup;
 use App\Models\Location;
@@ -16,19 +15,12 @@ class BackupActions
     {
         if (app()->environment('local')) {
             ray('Backup Acion');
-            // job which analyeses Image with AI
-
             CreateBackupJob::dispatchSync($storedPath, $vault, $meta);
-
-            AnalyseImageJob::dispatch($storedPath);
 
             return;
         }
 
         ray('Backup Acion');
-        // job which analyeses Image with AI
-        AnalyseImageJob::dispatch($storedPath);
-
         CreateBackupJob::dispatch($storedPath, $vault, $meta);
     }
 

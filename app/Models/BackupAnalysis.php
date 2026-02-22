@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BackupAnalysis extends Model
 {
-    public function backup()
+    use HasUuid;
+
+    public function backup(): BelongsTo
     {
-        return $this->belongsTo(Backup::class);
+        return $this->hasOne(Backup::class);
     }
 
     protected $casts = [

@@ -2,9 +2,10 @@
 
 namespace App\Jobs\Backup;
 
+use App\Models\Backup;
+use App\Models\BackupAnalysis;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\Storage;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Schema\ArraySchema;
@@ -19,7 +20,7 @@ class AnalyseImageJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(private string $storedPath)
+    public function __construct(private string $storedPath, private int $backupId)
     {
         ray('Uploading to claude');
         ray($storedPath);
@@ -30,8 +31,6 @@ class AnalyseImageJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $absolutePath = Storage::path($this->storedPath);
-
         $schema = new ObjectSchema(
             name: 'image_tags',
             description: 'Tags to describe an image',
@@ -53,6 +52,19 @@ class AnalyseImageJob implements ShouldQueue
             ->withSchema($schema)
             ->asStructured();
 
+        $backup = Backup::findOrFail($this->backupId);
+
+        $analysis = BackupAnalysis::create([
+            'description' => $response->structured['description'] ?? null,
+            'tags' => $response->structured['tags'] ?? [],
+        ]);
+
+        $backup['backup_analysis_id'] = $analysis;
+
+        ray($backup);
+
         ray($response);
+
+        // Storage::delete($this->storedPath);
     }
 }

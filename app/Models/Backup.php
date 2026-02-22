@@ -48,9 +48,9 @@ class Backup extends Model
         return $this->hasOne(StorageClass::class);
     }
 
-    public function backupAnalysis(): HasOne
+    public function backupAnalysis(): BelongsTo
     {
-        return $this->hasOne(BackupAnalysis::class);
+        return $this->belongsTo(BackupAnalysis::class);
     }
 
     public function getTemporarySignedUrlAtribute(): string
