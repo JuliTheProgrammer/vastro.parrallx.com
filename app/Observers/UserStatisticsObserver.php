@@ -10,5 +10,6 @@ class UserStatisticsObserver
     public function created(UserStatistics $userStatistics): void
     {
         $userStatistics->current_ai_model = AIModelEnum::CLAUDE_HAIKU_4;
+        $userStatistics->save();
     }
 }

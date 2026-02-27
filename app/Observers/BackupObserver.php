@@ -21,7 +21,7 @@ class BackupObserver
     {
         $user = Auth::user();
 
-        $user->userStatistics()->increment('total_stored_megaBytes', $backup->size_megaBytes);
+        $user->userStatistics()->increment('total_stored_bytes', $backup->size_bytes);
 
         $user->userStatistics()->increment('backup_count');
     }

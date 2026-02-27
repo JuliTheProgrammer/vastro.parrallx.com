@@ -2,17 +2,20 @@
 
 namespace App\Actions;
 
+use App\Exceptions\InsufficientAllowedBackup;
 use App\Jobs\Backup\CreateBackupJob;
 use App\Models\Backup;
 use App\Models\Location;
 use App\Models\Vault;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
+use Illuminate\Support\Facades\Auth;
 
 class BackupActions
 {
     public function uploadBackup(string $storedPath, Vault $vault, array $meta, bool $aiAnalyses): void
     {
+        throw_if(Auth::user()->userStatistics->isAllowedToUplaod(), InsufficientAllowedBackup::class);
         CreateBackupJob::dispatch($storedPath, $vault, $meta, $aiAnalyses);
     }
 

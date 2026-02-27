@@ -32,6 +32,7 @@ class BackupRequest extends FormRequest
             'vault_id' => 'required|exists:vaults,id',
             'folder_id' => 'nullable|exists:folders,id',
             'storage_class' => 'nullable|string|max:100',
+            'ai_analyses' => 'boolean',
         ];
     }
 }

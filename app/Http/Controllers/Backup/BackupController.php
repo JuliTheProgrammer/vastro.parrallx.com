@@ -61,10 +61,7 @@ class BackupController extends Controller
     {
         $validated = $request->validated();
 
-        // $aiAnalyses = $validated['analyses'];
-
-        // temp, change later in fronend ui
-        $aiAnalyses = true;
+        $aiAnalyses = (bool) ($validated['ai_analyses'] ?? false);
 
         $vault = Vault::findOrFail($validated['vault_id']);
         $storageClass = $validated['storage_class'] ?? 'STANDARD';

@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('path')->unique();
             $table->string('mime_type');
             $table->string('mime_type_readable');
-            $table->integer('size_megaBytes');
+            $table->integer('size_bytes');
             $table->string('data_classifications')->nullable();
             $table->softDeletes();
             $table->timestamps();

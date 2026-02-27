@@ -2,7 +2,10 @@
 
 namespace App\Jobs\Backup;
 
+use App\Exceptions\BackupTooLargeToAnalyseException;
+use App\Exceptions\InvalidBackupTypeException;
 use App\Exceptions\NotEnoughTokensException;
+use App\Helper\MimeHelper;
 use App\Models\Backup;
 use App\Models\StorageClass;
 use App\Models\Vault;
@@ -91,16 +94,25 @@ class CreateBackupJob implements ShouldQueue
             'storage_class_id' => $storageClassId,
             'name' => $this->meta['original_name'] ?? 'backup',
             'path' => $key,
-            'size_megaBytes' => $this->meta['size'] ?? null,
+            'size_bytes' => $this->meta['size'] ?? null,
             'mime_type' => $this->meta['mime_type'] ?? null,
             'mime_type_readable' => $this->meta['mime_type_readable'] ?? $this->meta['mime_type'] ?? null,
         ]);
 
         $backup->load('user.userStatistics');
 
-        throw_if($backup->user->userStatistics->hasEnoughTokens(), NotEnoughTokensException::class);
-
         if ($this->aiAnalyses) {
+            throw_if($backup->user->userStatistics->hasEnoughTokens(), NotEnoughTokensException::class);
+            throw_if($backup->size_bytes > (500 * 1_000_000), BackupTooLargeToAnalyseException::class);
+            // throw if the document is greater than 500MB
+
+            $extension = MimeHelper::convertMimeType($backup->mime_type);
+            $isSupportedType = in_array($extension, [
+                'jpg', 'png', 'gif', 'jpeg',
+                'pdf',
+            ], strict: true);
+            throw_if(! $isSupportedType, InvalidBackupTypeException::class);
+
             AnalyseImageJob::dispatch($this->storedPath, $backup->id);
         }
     }

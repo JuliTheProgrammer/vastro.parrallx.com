@@ -16,7 +16,8 @@ return new class extends Migration
             $table->id();
             $table->uuid();
             $table->foreignIdFor(User::class)->constrained()->restrictOnDelete();
-            $table->bigInteger('total_stored_megaBytes')->default(0);
+            $table->bigInteger('total_stored_bytes')->default(0);
+            $table->bigInteger('max_allowed_bytes');
             $table->integer('backup_count')->default(0);
             $table->integer('max_api_tokens');
             $table->integer('used_api_tokens')->default(0);

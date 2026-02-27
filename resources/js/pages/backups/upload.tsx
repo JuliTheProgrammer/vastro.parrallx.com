@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +34,7 @@ export default function UploadBackup() {
     const [isUploading, setIsUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+    const [aiAnalyses, setAiAnalyses] = useState(false);
     const { data, setData, post, processing, reset } = useForm<{
         vault_id: string;
         folder_id: string | null;
@@ -52,10 +54,7 @@ export default function UploadBackup() {
 
     const hasFiles = useMemo(() => selectedFiles.length > 0, [selectedFiles]);
     const canContinue = step === 1 ? hasFiles : Boolean(dataVault);
-    const totalBytes = useMemo(
-        () => selectedFiles.reduce((sum, file) => sum + file.size, 0),
-        [selectedFiles],
-    );
+    const totalBytes = useMemo(() => selectedFiles.reduce((sum, file) => sum + file.size, 0), [selectedFiles]);
     const totalGB = totalBytes / (1024 * 1024 * 1024);
     const formattedTotalGB = totalGB.toFixed(2);
     const formatCurrency = (value: number) =>
@@ -106,6 +105,7 @@ export default function UploadBackup() {
                     vault_id: dataVault,
                     folder_id: folder || null,
                     storage_class: storageClass || null,
+                    ai_analyses: aiAnalyses,
                     uploads,
                 },
                 {
@@ -120,6 +120,7 @@ export default function UploadBackup() {
                         setStorageClass('');
                         setDataVault('');
                         setFolder('');
+                        setAiAnalyses(false);
                         setStep(1);
                     },
                 },
@@ -173,9 +174,7 @@ export default function UploadBackup() {
                                 <Button variant="outline" asChild>
                                     <label htmlFor="backup-files">Choose files</label>
                                 </Button>
-                                {hasFiles ? (
-                                    <span className="text-xs text-muted-foreground">{selectedFiles.length} selected</span>
-                                ) : null}
+                                {hasFiles ? <span className="text-xs text-muted-foreground">{selectedFiles.length} selected</span> : null}
                                 <Input
                                     id="backup-files"
                                     type="file"
@@ -251,6 +250,7 @@ export default function UploadBackup() {
                                     </SelectContent>
                                 </Select>
                             </div>
+
                             {/*
                             <div className="space-y-2">
                                 <Label>Folder</Label>
@@ -297,6 +297,18 @@ export default function UploadBackup() {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>AI Analysis</Label>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox id="ai-analyses" checked={aiAnalyses} onCheckedChange={(checked) => setAiAnalyses(checked === true)} />
+                                    <label htmlFor="ai-analyses" className="cursor-pointer text-sm text-foreground">
+                                        Enable
+                                    </label>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Supports PDFs and images (jpg, png, gif, jpeg), each up to 500 MB.
+                                </p>
                             </div>
                         </div>
                         <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">

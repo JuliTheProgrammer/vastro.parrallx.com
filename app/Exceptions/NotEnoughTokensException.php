@@ -21,9 +21,6 @@ class NotEnoughTokensException extends Exception
      */
     public function render(Request $request)
     {
-        return response()->json([
-            'code' => 401,
-            'message' => 'Not Enough Tokens',
-        ]);
+        return back()->with(['error', $this->getMessage() ?: 'Not enough tokens.']);
     }
 }

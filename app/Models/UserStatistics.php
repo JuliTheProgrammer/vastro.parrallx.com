@@ -22,7 +22,7 @@ class UserStatistics extends Model
      */
     protected $fillable = [
         'user_id',
-        'total_stored_megaBytes',
+        'total_stored_bytes',
         'backup_count',
         'max_api_tokens',
         'used_api_tokens',
@@ -30,6 +30,7 @@ class UserStatistics extends Model
         'vault_count',
         'account_blocked',
         'current_ai_model',
+        'max_allowed_bytes',
     ];
 
     protected function casts(): array
@@ -48,6 +49,11 @@ class UserStatistics extends Model
     public function hasEnoughTokens(): bool
     {
         return $this->used_api_tokens >= $this->max_api_tokens;
+    }
+
+    public function isAllowedToUplaod(): bool
+    {
+        return $this->total_stored_bytes >= $this->max_allowed_bytes;
     }
 
     public function getActivitylogOptions(): LogOptions

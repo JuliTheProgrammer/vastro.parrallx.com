@@ -27,6 +27,9 @@ export interface SharedData {
     logo: string;
     auth: Auth;
     sidebarOpen: boolean;
+    flash: {
+        error?: string | null;
+    };
     [key: string]: unknown;
 }
 

@@ -12,6 +12,7 @@ class UserObserver
         UserStatistics::create([
             'user_id' => $user->id,
             'max_api_tokens' => 10000,
+            'max_allowed_bytes' => 10_000_000_000_000,
         ]);
     }
 }

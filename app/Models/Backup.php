@@ -37,7 +37,7 @@ class Backup extends Model
         'path',
         'mime_type',
         'mime_type_readable',
-        'size_megaBytes',
+        'size_bytes',
         'data_classifications',
     ];
 
