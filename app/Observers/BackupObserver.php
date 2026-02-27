@@ -17,15 +17,14 @@ class BackupObserver
     /**
      * Handle the Backup "created" event.
      */
-    //    public function created(Backup $backup): void
-    //    {
-    //        $user = Auth::user();
-    //        $user->userStatistics()->total_stored_megaBytes += $backup->size;
-    //
-    //        $user->userStatistics()->backup_count++;
-    //
-    //        $user->userStatistics()->save();
-    //    }
+    public function created(Backup $backup): void
+    {
+        $user = Auth::user();
+
+        $user->userStatistics()->increment('total_stored_megaBytes', $backup->size_megaBytes);
+
+        $user->userStatistics()->increment('backup_count');
+    }
 
     /**
      * Handle the Backup "updated" event.

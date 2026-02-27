@@ -16,6 +16,8 @@ return new class extends Migration
             $table->uuid();
             $table->text('description')->nullable();
             $table->json('tags')->nullable();
+            $table->json('extra_information')->nullable();
+            $table->integer('used_tokens');
             $table->timestamps();
         });
     }

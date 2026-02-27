@@ -13,7 +13,7 @@ class VaultObserver
     public function created(Vault $vault): void
     {
         $user = Auth::user();
-        $user->userStatistics()->vault_count++;
+        $user->userStatistics()->increment('vault_count');
     }
 
     /**
@@ -30,7 +30,7 @@ class VaultObserver
     public function deleted(Vault $vault): void
     {
         $user = Auth::user();
-        $user->userStatistics()->vault_count--;
+        $user->userStatistics()->decrement('vault_count');
     }
 
     /**

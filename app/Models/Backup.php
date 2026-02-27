@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Actions\LinkAction;
+use App\Enums\BackupClassificationEnum;
 use App\Observers\BackupObserver;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -22,6 +23,13 @@ class Backup extends Model
 {
     /** @use HasFactory<\Database\Factories\BackupFactory> */
     use HasFactory, HasUuid, LogsActivity, Searchable, SoftDeletes;
+
+    protected function casts(): array
+    {
+        return [
+            'data_classifications' => BackupClassificationEnum::class,
+        ];
+    }
 
     public function user(): BelongsTo
     {

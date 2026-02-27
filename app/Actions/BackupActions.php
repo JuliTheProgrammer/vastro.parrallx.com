@@ -13,15 +13,7 @@ class BackupActions
 {
     public function uploadBackup(string $storedPath, Vault $vault, array $meta, bool $aiAnalyses): void
     {
-        if (app()->environment('local')) {
-            ray('Backup Acion');
-            CreateBackupJob::dispatchSync($storedPath, $vault, $meta, $aiAnalyses);
-
-            return;
-        }
-
-        ray('Backup Acion');
-        CreateBackupJob::dispatch($storedPath, $vault, $meta);
+        CreateBackupJob::dispatch($storedPath, $vault, $meta, $aiAnalyses);
     }
 
     public function deleteBackup(Backup $backup)

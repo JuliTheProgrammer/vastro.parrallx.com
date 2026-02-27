@@ -24,7 +24,7 @@ class BackupFactory extends Factory
             'name' => fake()->words(3, true),
             'path' => fake()->filePath(),
             'mime_type' => fake()->mimeType(),
-            'size' => (string) fake()->numberBetween(10_000, 5_000_000),
+            'size_megaBytes' => fake()->numberBetween(1, 512),
         ];
     }
 }

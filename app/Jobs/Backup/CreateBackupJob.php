@@ -107,13 +107,11 @@ class CreateBackupJob implements ShouldQueue
             'storage_class_id' => $storageClassId,
         ]);
 
-        if (app()->environment('local')) {
-            AnalyseImageJob::dispatchSync($this->storedPath, $backup->id);
-
+        // check if the user is allowed to analyse the image based on credits
+        if ($backup->user->userStatistics->used_api_tokens >= $backup->user->userStatistics->max_api_tokens) {
+            // TODO - make a custom exception
             return;
         }
-
-        ray($this->aiAnalyses);
 
         if ($this->aiAnalyses) {
             AnalyseImageJob::dispatch($this->storedPath, $backup->id);
