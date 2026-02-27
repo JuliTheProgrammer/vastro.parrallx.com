@@ -8,39 +8,31 @@ use App\Models\User;
 
 class VaultAction
 {
-    public function createVault($vaultName, $vaultLocation, $wormProtection, $deleteProtection, $userId)
+    public function createVault(string $vaultName, string $vaultLocation, bool $wormProtection, bool $deleteProtection, int $userId): void
     {
-        ray('Action Called');
-        $data = [$vaultName, $vaultLocation, $wormProtection, $deleteProtection, $userId];
+        $job = new CreateVaultJob($vaultName, $vaultLocation, $wormProtection, $deleteProtection, $userId);
+
         if (app()->environment('local')) {
-            CreateVaultJob::dispatchSync($data);
+            CreateVaultJob::dispatchSync($vaultName, $vaultLocation, $wormProtection, $deleteProtection, $userId);
 
             return;
         }
 
-        dispatch(new CreateVaultJob($data));
+        dispatch($job);
     }
 
-    // Get vaults from S3 used to sync
-    public function syncVaultsFromS3()
+    public function syncVaultsFromS3(): void
     {
         GetVaultJob::dispatch();
     }
 
-    // Get vaults for each individual user
-    public function getVaultsByUser($user): ?array
+    public function getVaultsByUser(User $user): \Illuminate\Database\Eloquent\Collection
     {
-        $user = User::where('id', $user->id)->firstOrFail();
-        $vaults = $user->vaults()->get();
-
-        return $vaults;
+        return $user->vaults()->get();
     }
 
-    public function getVaultsByUserId($userId)
+    public function getVaultsByUserId(int $userId): \Illuminate\Database\Eloquent\Collection
     {
-        $user = User::where('id', $userId)->firstOrFail();
-        $vaults = $user->vaults()->get();
-
-        return $vaults;
+        return User::findOrFail($userId)->vaults()->get();
     }
 }

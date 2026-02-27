@@ -29,7 +29,7 @@ class BackupController extends Controller
      */
     public function index(Request $request): Response
     {
-        $backups = Backup::all();
+        $backups = Backup::with('backupAnalysis')->get();
         $vaults = $request->user()
             ?->vaults()
             ->get() ?? collect();
@@ -103,12 +103,12 @@ class BackupController extends Controller
      *
      * @throws Throwable
      */
-    public function show($uuid)
+    public function show($id)
     {
-        $backup = Backup::where('uuid', $uuid)->firstOrFail();
+        $backup = Backup::where('uuid', $id)->firstOrFail();
         $link = app(LinkAction::class)->createLinkForBackup($backup);
         // check if user is logged in otherwise throw exception
-        throw_if(! Auth::user(), InvalidUserShowBackup::class); // this can only be done later withing the logic in our applicaiton
+        // throw_if(! Auth::user(), InvalidUserShowBackup::class); // this can only be done later withing the logic in our applicaiton
 
         return redirect($link);
     }

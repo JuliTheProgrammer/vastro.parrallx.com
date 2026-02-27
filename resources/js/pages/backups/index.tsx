@@ -22,6 +22,12 @@ type Folder = {
     folderable_id: number | string;
     storage_class?: string | null;
 };
+type BackupAnalysis = {
+    extra_information?: {
+        data_classifications?: number | null;
+    } | null;
+};
+
 type Backup = {
     mime_type_readable: string;
     id: number | string;
@@ -31,6 +37,7 @@ type Backup = {
     created_at?: string | null;
     backupable_type: string;
     backupable_id: number | string;
+    backup_analysis?: BackupAnalysis | null;
 };
 
 type TreeNode =
@@ -67,6 +74,14 @@ const formatDate = (value?: string | null) => {
         month: 'short',
         day: 'numeric',
     }).format(date);
+};
+
+const classificationLabel = (score?: number | null): { label: string; className: string } => {
+    if (score == null) return { label: '—', className: 'text-muted-foreground' };
+    if (score <= 20) return { label: 'Public', className: 'text-green-600' };
+    if (score <= 40) return { label: 'Internal', className: 'text-blue-600' };
+    if (score <= 80) return { label: 'Confidential', className: 'text-yellow-600' };
+    return { label: 'Restricted', className: 'text-red-600' };
 };
 
 const parentKey = (type: string, id: number | string) => `${type}:${id}`;
@@ -380,6 +395,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                             <TableHead>Preview</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Created</TableHead>
+                                            <TableHead>Classification</TableHead>
                                             <TableHead className="text-right">More</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -403,6 +419,7 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-sm text-muted-foreground">Vault</TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">—</TableCell>
                                                         <TableCell className="text-sm text-muted-foreground">—</TableCell>
                                                         <TableCell className="text-sm text-muted-foreground">—</TableCell>
                                                         <TableCell className="text-right text-sm text-muted-foreground">Open</TableCell>
@@ -441,6 +458,13 @@ export default function BackupsIndex({ vaults = [], folders = [], backups = [] }
                                                     </TableCell>
                                                     <TableCell className="text-sm text-muted-foreground">
                                                         {formatDate(child.backup.created_at)}
+                                                    </TableCell>
+                                                    <TableCell className="text-sm text-muted-foreground">
+                                                        {(() => {
+                                                            const score = child.backup.backup_analysis?.extra_information?.data_classifications;
+                                                            const { label, className } = classificationLabel(score);
+                                                            return <span className={`text-xs font-medium ${className}`}>{label}</span>;
+                                                        })()}
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <DropdownMenu>

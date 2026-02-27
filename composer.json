@@ -19,6 +19,8 @@
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
         "laravel/workos": "^0.1.0",
+        "phpoffice/phpspreadsheet": "^5.4",
+        "phpoffice/phpword": "^1.4",
         "prism-php/prism": "^0.99.19",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-flare": "^2.2",
@@ -28,7 +30,7 @@
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "fruitcake/laravel-debugbar": "^4.0",
-        "laravel/boost": "^1.8",
+        "laravel/boost": "^2.1",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",

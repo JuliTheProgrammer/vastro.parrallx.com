@@ -3,33 +3,27 @@
 namespace App\Jobs\KMS;
 
 use Aws\Kms\KmsClient;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Queue\Queueable;
 
 class EncryptDataJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Queueable;
 
-    public function __construct(string $storedPath)
+    public function __construct(protected string $storedPath) {}
+
+    public function handle(): void
     {
-
-        $contents = file_get_contents($storedPath);
+        $contents = file_get_contents($this->storedPath);
 
         $kmsClient = new KmsClient([
             'version' => 'default',
-            'region' => 'us-east-2',
+            'region' => config('services.aws.region'),
         ]);
 
-        $keyId = config('services.kms.key_id');
-
-        $result = $kmsClient->encrypt([
-            'KeyId' => $keyId,
+        $kmsClient->encrypt([
+            'KeyId' => config('services.kms.key_id'),
             'Plaintext' => $contents,
         ]);
     }
-
-    public function handle(): void {}
 }

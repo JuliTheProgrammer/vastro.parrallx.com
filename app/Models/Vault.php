@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -21,26 +22,42 @@ class Vault extends Model
     use HasFactory, HasUuid, LogsActivity, SoftDeletes;
 
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
         'user_id',
+        'location_id',
         'name',
         'aws_bucket_name',
         'aws_bucket_arn',
-        'region',
-        'location',
         'worm_protection',
         'delete_protection',
         'kms_encryption',
         'kms_arn',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'worm_protection' => 'boolean',
+            'delete_protection' => 'boolean',
+            'kms_encryption' => 'boolean',
+        ];
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
+    }
+
+    public function folders(): HasMany
+    {
+        return $this->hasMany(Folder::class);
     }
 
     public function linkable(): MorphOne
@@ -51,16 +68,6 @@ class Vault extends Model
     public function folderable(): MorphMany
     {
         return $this->morphMany(Folder::class, 'folderable');
-    }
-
-    public function folder(): BelongsTo
-    {
-        return $this->belongsTo(Folder::class);
-    }
-
-    public function location(): BelongsTo
-    {
-        return $this->belongsTo(Location::class);
     }
 
     public function getActivitylogOptions(): LogOptions

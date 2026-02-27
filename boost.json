@@ -1,13 +1,24 @@
 {
     "agents": [
-        "codex",
-        "phpstorm"
+        "claude_code",
+        "junie",
+        "codex"
     ],
-    "editors": [
-        "codex",
-        "phpstorm",
-        "vscode"
+    "guidelines": true,
+    "herd_mcp": true,
+    "mcp": true,
+    "packages": [
+        "prism-php/prism"
     ],
-    "guidelines": [],
-    "herd_mcp": true
+    "sail": false,
+    "skills": [
+        "wayfinder-development",
+        "pest-testing",
+        "inertia-react-development",
+        "tailwindcss-development",
+        "developing-with-prism",
+        "eloquent-best-practices",
+        "laravel-architecture",
+        "laravel-expert"
+    ]
 }

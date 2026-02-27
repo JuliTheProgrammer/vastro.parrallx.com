@@ -5,17 +5,21 @@ namespace App\Jobs\Folder;
 use App\Models\Folder;
 use App\Models\Vault;
 use Aws\S3\S3Client;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Queue\Queueable;
 
 class CreateFolderJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Queueable;
 
-    public function __construct(protected string $name, protected string $storageClass, protected $folderable_type, protected $folderable_id, protected string $location, protected Vault $vault) {}
+    public function __construct(
+        protected string $name,
+        protected string $storageClass,
+        protected string $folderableType,
+        protected int $folderableId,
+        protected string $location,
+        protected Vault $vault,
+    ) {}
 
     public function handle(): void
     {
@@ -24,16 +28,21 @@ class CreateFolderJob implements ShouldQueue
             'region' => $this->location,
         ]);
 
+        $awsPath = "{$this->name}/";
+
         $s3Client->putObject([
             'Bucket' => $this->vault->aws_bucket_name,
-            'Key' => "{$this->name}/",
+            'Key' => $awsPath,
             'Body' => '',
         ]);
 
-        $folder = Folder::create([
-            'folderable_type' => $this->folderable_type,
-            'folderable_id' => $this->folderable_id,
+        Folder::create([
+            'vault_id' => $this->vault->id,
+            'folderable_type' => $this->folderableType,
+            'folderable_id' => $this->folderableId,
             'name' => $this->name,
+            'location' => $this->location,
+            'aws_path' => $awsPath,
             'storage_class' => $this->storageClass,
         ]);
     }

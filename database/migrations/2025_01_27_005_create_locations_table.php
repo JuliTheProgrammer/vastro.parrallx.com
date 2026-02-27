@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
+            $table->string('code')->unique()->index();
             $table->string('name');
             $table->tinyInteger('AZs');
             $table->string('geography');
-            $table->boolean('active');
+            $table->boolean('active')->index();
             $table->timestamps();
         });
     }

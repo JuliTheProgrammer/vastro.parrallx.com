@@ -4,17 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Location extends Model
 {
     use HasFactory;
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * @var list<string>
      */
+    protected $fillable = [
+        'code',
+        'name',
+        'AZs',
+        'geography',
+        'active',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -22,8 +28,8 @@ class Location extends Model
         ];
     }
 
-    public function vault(): BelongsToMany
+    public function vaults(): HasMany
     {
-        return $this->belongsToMany(Vault::class);
+        return $this->hasMany(Vault::class);
     }
 }

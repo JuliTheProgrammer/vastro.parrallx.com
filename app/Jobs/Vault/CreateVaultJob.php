@@ -3,58 +3,48 @@
 namespace App\Jobs\Vault;
 
 use App\Models\Location;
-use App\Models\User;
 use App\Models\Vault;
 use Aws\S3\S3Client;
 use Aws\Sdk;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 
 class CreateVaultJob implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 10;
+    public int $timeout = 120;
 
-    public $tries = 3;
+    public int $tries = 3;
 
-    public $backoff = 5;
+    public int $backoff = 5;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct(protected array $vaultData) {}
+    public function __construct(
+        protected string $name,
+        protected string $region,
+        protected bool $wormProtection,
+        protected bool $deleteProtection,
+        protected int $userId,
+    ) {}
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
-
-        ray($this->vaultData);
         $sdk = new Sdk([
-            'region' => Arr::get($this->vaultData, 1),
+            'region' => $this->region,
         ]);
 
         $stsClient = $sdk->createSts();
-
-        // assume role
-
         $result = $stsClient->getSessionToken();
 
-        ray($this->vaultData);
-        $s3Client = new S3Client(
-            [
-                'region' => Arr::get($this->vaultData, 1),
-                'credentials' => [
-                    'key' => $result['Credentials']['AccessKeyId'],
-                    'secret' => $result['Credentials']['SecretAccessKey'],
-                    'token' => $result['Credentials']['SessionToken'],
-                ],
-            ]);
+        $s3Client = new S3Client([
+            'region' => $this->region,
+            'credentials' => [
+                'key' => $result['Credentials']['AccessKeyId'],
+                'secret' => $result['Credentials']['SecretAccessKey'],
+                'token' => $result['Credentials']['SessionToken'],
+            ],
+        ]);
 
         activity('Request POST')
             ->log('request to create bucket');
@@ -63,13 +53,12 @@ class CreateVaultJob implements ShouldQueue
 
         $bucket = $s3Client->createBucket([
             'Bucket' => $bucketName,
-            'ObjectLockEnabledForBucket' => Arr::get($this->vaultData, 3),
+            'ObjectLockEnabledForBucket' => $this->deleteProtection,
         ]);
 
         $s3Client->waitUntil('BucketExists', ['Bucket' => $bucketName]);
 
-        // bucket versioning
-        if (Arr::get($this->vaultData, 2)) {
+        if ($this->wormProtection) {
             $s3Client->putBucketVersioning([
                 'Bucket' => $bucketName,
                 'VersioningConfiguration' => [
@@ -78,53 +67,27 @@ class CreateVaultJob implements ShouldQueue
             ]);
         }
 
-        // put tags on buckets
-
-        ray($bucket);
-
-        ray(Arr::get($bucket, 'BucketArn'));
-
-        $location = Arr::get($this->vaultData, 1);
-
-        $locationId = Location::where('code', $location)->firstOrFail()->id;
-
-        ray($location);
+        $locationId = Location::where('code', $this->region)->firstOrFail()->id;
 
         Vault::create([
-            'user_id' => Arr::get($this->vaultData, 4),
-            'name' => Arr::get($this->vaultData, 0),
+            'user_id' => $this->userId,
+            'name' => $this->name,
             'aws_bucket_name' => $bucketName,
-            'aws_bucket_arn' => Arr::get($bucket, 'BucketArn'),
-            'worm_protection' => Arr::get($this->vaultData, 2),
-            'delete_protection' => Arr::get($this->vaultData, 3),
+            'aws_bucket_arn' => $bucket['BucketArn'] ?? null,
+            'worm_protection' => $this->wormProtection,
+            'delete_protection' => $this->deleteProtection,
             'location_id' => $locationId,
         ]);
-
     }
 
-    public function generateBucketName(): string
+    protected function generateBucketName(): string
     {
-        $user = Arr::get($this->vaultData, 4);
-
-        $uuid = Str::uuid()->toString();
-
-        // take the user uuid as a prefix, currently substituted through a Str::uuid
-        return "vault-{$user}-{$uuid}";
+        return "vault-{$this->userId}-".now()->timestamp;
     }
 
-    protected function resolveLocationCode(string $code): string
-    {
-        return Location::query()
-            ->where('code', $code)
-            ->firstOrFail()
-            ->code;
-    }
-
-    public function failed(Exception $exception)
+    public function failed(Exception $exception): void
     {
         activity('Request FAILED')
             ->log("request to create bucket failed {$exception->getMessage()}");
-
-        // show error message to user
     }
 }

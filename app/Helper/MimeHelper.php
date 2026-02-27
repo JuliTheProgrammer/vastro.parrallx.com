@@ -2,11 +2,13 @@
 
 namespace App\Helper;
 
+use App\Enums\UploadDataType;
+
 class MimeHelper
 {
     public static function convertMimeType(string $mimeType): string
     {
-        $extentiontype = match ($mimeType) {
+        $extensionType = match ($mimeType) {
             // Documents
             'application/pdf' => 'pdf',
             'application/msword' => 'doc',
@@ -60,6 +62,21 @@ class MimeHelper
             default => '',
         };
 
-        return $extentiontype ?: $mimeType;
+        return $extensionType ?: $mimeType;
+    }
+
+    public static function identifyUploadDataType(string $mimeType): UploadDataType
+    {
+        $extension = self::convertMimeType($mimeType);
+
+        return match (true) {
+            in_array($extension, ['jpg', 'png', 'gif', 'webp', 'svg', 'heic', 'heif']) => UploadDataType::IMAGE,
+            in_array($extension, ['mp4', 'webm', 'ogv', 'mov', 'avi', 'mkv']) => UploadDataType::VIDEO,
+            in_array($extension, ['mp3', 'wav', 'ogg', 'aac', 'flac']) => UploadDataType::AUDIO,
+            in_array($extension, ['zip', 'tar', 'gz', '7z', 'rar']) => UploadDataType::ARCHIVE,
+            in_array($extension, ['json', 'xml', 'yaml', 'html', 'csv']) => UploadDataType::CODE,
+            in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt']) => UploadDataType::FILE,
+            default => UploadDataType::OTHER,
+        };
     }
 }

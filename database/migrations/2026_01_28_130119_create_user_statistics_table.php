@@ -23,6 +23,7 @@ return new class extends Migration
             $table->integer('backup_analysis_count')->default(0);
             $table->integer('vault_count')->default(0);
             $table->boolean('account_blocked')->default(false);
+            $table->string('current_ai_model')->nullable();
             $table->timestamps();
         });
     }

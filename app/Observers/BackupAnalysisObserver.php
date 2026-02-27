@@ -14,5 +14,11 @@ class BackupAnalysisObserver
         $user->userStatistics()->increment('backup_analysis_count');
 
         $user->userStatistics()->increment('used_api_tokens', $backupAnalysis->used_tokens);
+
+        // Add information to Backup such as Data Classification if available or language
+
+        if (empty($backupAnalysis->data_classification)) {
+            return;
+        }
     }
 }

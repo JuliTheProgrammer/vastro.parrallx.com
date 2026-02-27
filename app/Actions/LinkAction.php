@@ -75,6 +75,7 @@ class LinkAction
             'user_id' => $this->vault->user_id,
             'linkable_type' => Backup::class,
             'linkable_id' => $backup->id,
+            'url' => string($request->getUri()),
             'name' => Str::uuid()->toString(),
             'expires_at' => now()->addHour(),
         ]);

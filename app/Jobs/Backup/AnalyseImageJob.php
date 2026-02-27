@@ -2,13 +2,16 @@
 
 namespace App\Jobs\Backup;
 
+use App\Enums\AIModelEnum;
+use App\Enums\UploadDataType;
+use App\Helper\DataClassificationHelper;
+use App\Helper\MimeHelper;
 use App\Models\Backup;
 use App\Models\BackupAnalysis;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Schema\ArraySchema;
@@ -22,55 +25,71 @@ class AnalyseImageJob implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct(private string $storedPath, private int $backupId)
-    {
-        ray('Uploading to claude');
-        ray($storedPath);
-    }
+    public function __construct(private string $storedPath, private int $backupId) {}
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
         $backup = Backup::findOrFail($this->backupId);
-        $mimeType = $this->resolveMimeType($backup);
+        $mimeType = MimeHelper::identifyUploadDataType($backup->mime_type);
 
-        ray($mimeType);
+        $currentAIModel = Auth::user()->userStatistics()->current_ai_model ?? AIModelEnum::CLAUDE_HAIKU_4;
 
-        match (true) {
-            $this->isImage($mimeType) => $response = $this->handleImage(),
-            $this->isVideo($mimeType) => $response = $this->handleVideo(),
-            $this->isDocument($mimeType) => $response = $this->handleDocument(),
-            default => $response = null,
-        };
+        $response = null;
 
-        if (! $response) {
-            return;
+        // What we can do later is redirect to openAI when the document is other than PDF.
+
+        if ($mimeType === UploadDataType::FILE) {
+            $response = $this->handleDocument();
         }
+
+        if ($mimeType === UploadDataType::IMAGE) {
+            $response = $this->handleImage();
+        }
+
+        throw_if(empty($response), new \Exception('No response from AI')); // TODO new exception
+
+        $backupClassification = DataClassificationHelper::identifyClassificationEnum($response->structured['data_classifications'] ?? 0);
 
         $analysis = BackupAnalysis::create([
             'description' => $response->structured['description'] ?? null,
             'tags' => $response->structured['tags'] ?? [],
-            'extra_information' => Arr::except($response->structured, ['description', 'tags']), // this is the extra information which the ai gives back -> if different for every type
+            'extra_information' => Arr::except($response->structured, ['description', 'tags']),
             'used_tokens' => $response->usage->promptTokens + $response->usage->completionTokens,
         ]);
 
-        $backup->backup_analysis_id = $analysis->id;
-        $backup->save();
+        if ($backupClassification) {
+            $backup->update(['backup_classification' => $backupClassification]);
+        }
 
-        ray($backup);
-
-        // BUG when raying response, ray will crash
-
-        // Storage::delete($this->storedPath);
+        $backup->update(['backup_analysis_id' => $analysis->id]);
     }
 
-    // Return the response
-    private function handleImage()
+    private function handleExtractedDocumentText(string $text): mixed
+    {
+        $schema = new ObjectSchema(
+            name: 'document_summary',
+            description: 'A structured document description',
+            properties: [
+                new StringSchema('description', 'A summary of the document'),
+                new StringSchema('language_percentage', 'What is the language of the document and how confident are you in the language'),
+                new NumberSchema('data_classifications', 'How many secrets or confidential information does the document contain'),
+                new ArraySchema(
+                    'tags',
+                    'The tags to describe the documents',
+                    new StringSchema('tag', 'A tag to describe the document'),
+                ),
+            ],
+            requiredFields: ['description', 'language_percentage', 'tags', 'data_classifications']
+        );
+
+        return Prism::structured()
+            ->using(Provider::Anthropic, AIModelEnum::CLAUDE_HAIKU_4)
+            ->withSchema($schema)
+            ->withPrompt("Summarize the following document text, add tags to describe it, identify the language and how confident you are, and give a score from 1-100 for how much confidential information it contains:\n\n{$text}")
+            ->asStructured();
+    }
+
+    private function handleImage(): mixed
     {
         $schema = new ObjectSchema(
             name: 'image_tags',
@@ -82,28 +101,27 @@ class AnalyseImageJob implements ShouldQueue
                     'The tags to describe the image',
                     new StringSchema('tag', 'A tag to describe the image'),
                 ),
+                new NumberSchema('data_classifications', 'How confidential are the contents in this image'),
             ],
-            requiredFields: ['description', 'tags']
+            requiredFields: ['description', 'tags', 'data_classifications']
         );
 
-        $response = Prism::structured()
-            ->using(Provider::Anthropic, 'claude-haiku-4-5-20251001')
-            ->withPrompt('Give this image appropriate tags and a description',
+        return Prism::structured()
+            ->using(Provider::Anthropic, AIModelEnum::CLAUDE_HAIKU_4)
+            ->withPrompt('Give this image appropriate tags and a description, identify how much confidential information this image has on it',
                 [Image::fromStoragePath($this->storedPath)])
             ->withSchema($schema)
             ->asStructured();
-
-        return $response;
     }
 
-    public function handleDocument()
+    private function handleDocument(): mixed
     {
         $schema = new ObjectSchema(
             name: 'document_summary',
-            description: 'A structured document summary',
+            description: 'A structured document description',
             properties: [
-                new StringSchema('summary', 'A summary of the document'),
-                new StringSchema('language_percentage', 'What is the language percentage of the document'),
+                new StringSchema('description', 'A summary of the document'),
+                new StringSchema('language_percentage', 'What is the language of the document and how confident are you in the language'),
                 new NumberSchema('data_classifications', 'How many secrets or confidential information does the document contain'),
                 new ArraySchema(
                     'tags',
@@ -111,50 +129,13 @@ class AnalyseImageJob implements ShouldQueue
                     new StringSchema('tag', 'A tag to describe the document'),
                 ),
             ],
-            requiredFields: ['summary', 'language_percentage', 'tags', 'data_classifications']
+            requiredFields: ['description', 'language_percentage', 'tags', 'data_classifications']
         );
 
-        $response = Prism::structured()
-            ->using(Provider::Anthropic, 'claude-haiku-4-5-20251001')
+        return Prism::structured()
+            ->using(Provider::Anthropic, AIModelEnum::CLAUDE_HAIKU_4)
             ->withSchema($schema)
             ->withPrompt('Summarize this document, add tags to describe it and find out the language of the document and how confident you are. Give the document a score from 1-100 how much confidential information it has in it.', [Document::fromStoragePath($this->storedPath)])
             ->asStructured();
-
-        return $response;
-    }
-
-    private function handleVideo() {}
-
-    private function resolveMimeType(Backup $backup): string
-    {
-        $backupMimeType = $backup->mime_type ? Str::lower($backup->mime_type) : null;
-        if ($backupMimeType) {
-            return $backupMimeType;
-        }
-
-        $storageMimeType = Storage::mimeType($this->storedPath);
-        if ($storageMimeType) {
-            return Str::lower($storageMimeType);
-        }
-
-        return Str::lower(Str::afterLast($this->storedPath, '.'));
-    }
-
-    private function isImage(string $mimeType): bool
-    {
-        return Str::startsWith($mimeType, 'image/')
-            || in_array($mimeType, ['png', 'jpg', 'jpeg'], true);
-    }
-
-    private function isVideo(string $mimeType): bool
-    {
-        return Str::startsWith($mimeType, 'video/')
-            || in_array($mimeType, ['mp4'], true);
-    }
-
-    private function isDocument(string $mimeType): bool
-    {
-        return $mimeType === 'application/pdf'
-            || in_array($mimeType, ['pdf'], true);
     }
 }

@@ -17,6 +17,19 @@ class Folder extends Model
     /** @use HasFactory<\Database\Factories\FolderFactory> */
     use HasFactory, HasUuid, LogsActivity, SoftDeletes;
 
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'vault_id',
+        'folderable_type',
+        'folderable_id',
+        'name',
+        'location',
+        'aws_path',
+        'storage_class',
+    ];
+
     public function folderable(): MorphTo
     {
         return $this->morphTo();
@@ -24,7 +37,7 @@ class Folder extends Model
 
     public function linkable(): MorphMany
     {
-        return $this->MorphMany(Link::class, 'linkable');
+        return $this->morphMany(Link::class, 'linkable');
     }
 
     public function vault(): BelongsTo
