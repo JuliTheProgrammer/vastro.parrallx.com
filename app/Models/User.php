@@ -7,6 +7,7 @@ use App\Observers\UserObserver;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -14,12 +15,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
+use Spatie\Permission\Traits\HasRoles;
 
 #[ObservedBy(UserObserver::class)]
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use Billable, HasFactory, HasUuid, Notifiable, SoftDeletes;
+    use Billable, HasFactory, HasRoles, HasUuid, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -78,5 +80,27 @@ class User extends Authenticatable
     public function userStatistics(): HasOne
     {
         return $this->hasOne(UserStatistics::class);
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function organizationMemberships(): HasMany
+    {
+        return $this->hasMany(OrganizationMembership::class);
+    }
+
+    public function membershipFor(Organization $organization): ?OrganizationMembership
+    {
+        return $this->organizationMemberships()
+            ->where('organization_id', $organization->id)
+            ->first();
+    }
+
+    public function hasOrganizationPermission(Organization $organization, string $permission): bool
+    {
+        return $this->membershipFor($organization)?->hasPermission($permission) ?? false;
     }
 }
